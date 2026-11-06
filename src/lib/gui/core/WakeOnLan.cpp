@@ -8,6 +8,7 @@
 
 #include "ServerDiscovery.h"
 
+#include <QDebug>
 #include <QNetworkInterface>
 #include <QUdpSocket>
 

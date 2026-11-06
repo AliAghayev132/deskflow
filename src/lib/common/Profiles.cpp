@@ -8,6 +8,7 @@
 
 #include "Settings.h"
 
+#include <QDebug>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>

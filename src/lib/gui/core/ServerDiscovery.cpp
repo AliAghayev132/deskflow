@@ -6,6 +6,7 @@
 
 #include "ServerDiscovery.h"
 
+#include <QDebug>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QNetworkDatagram>
