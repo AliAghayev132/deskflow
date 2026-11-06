@@ -11,6 +11,8 @@
 
 #include <QDir>
 
+#include <functional>
+
 #include "common/Constants.h"
 #include "common/NetworkProtocol.h"
 #include "common/QSettingsProxy.h"
@@ -86,6 +88,7 @@ public:
     inline static const auto ShownServerFirstStartMessage = QStringLiteral("gui/shownServerFirstStartMessage");
     inline static const auto ShowVersionInTitle = QStringLiteral("gui/showVersionInTitle");
     inline static const auto IgnoreMissingKeyboardLayouts = QStringLiteral("gui/ignoreMissingKeyboardLayouts");
+    inline static const auto ActiveProfile = QStringLiteral("gui/activeProfile");
   };
   struct Log
   {
@@ -217,6 +220,21 @@ public:
   static QVariant computerDefaults(const QString &key);
   static QStringList knownComputers();
 
+  /**
+   * @brief Values of all keys stored in the settings file that match a filter
+   * @param filter returns true for keys that should be included
+   */
+  static QMap<QString, QVariant> values(const std::function<bool(const QString &)> &filter);
+
+  /**
+   * @brief Replace all keys that match a filter with a new set of values in one write.
+   * Matching keys missing from values are removed, so they fall back to their defaults.
+   * Used when switching profiles, emits no settingsChanged signals.
+   * @param filter returns true for keys that are replaced
+   * @param values the new values, keys that don't match the filter are ignored
+   */
+  static void replaceValues(const std::function<bool(const QString &)> &filter, const QMap<QString, QVariant> &values);
+
 Q_SIGNALS:
   void settingsChanged(const QString key);
   void settingsWritableChanged(bool writable);
@@ -316,6 +334,7 @@ private:
     , Gui::ShownServerFirstStartMessage
     , Gui::ShowVersionInTitle
     , Gui::IgnoreMissingKeyboardLayouts
+    , Gui::ActiveProfile
     , Security::Certificate
     , Security::CheckPeers
     , Security::KeySize

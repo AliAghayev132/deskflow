@@ -31,6 +31,7 @@ class QLocalServer;
 
 class DeskflowApplication;
 class LogDock;
+class ProfileBar;
 class StatusBar;
 
 namespace Ui {
@@ -145,6 +146,17 @@ private:
   void setHelpFilePath();
   void showHelpViewer() const;
 
+  /**
+   * @brief Make another profile active: stops the core, loads the profile into the UI and restarts the core if it was
+   * running
+   */
+  void switchProfile(const QString &name);
+
+  /**
+   * @brief Update the profile selector and the tray profile menu
+   */
+  void refreshProfiles();
+
   bool canRunCore() const;
 
   /**
@@ -184,12 +196,14 @@ private:
 
   LogDock *m_logDock;
   StatusBar *m_statusBar = nullptr;
+  ProfileBar *m_profileBar = nullptr;
 
   // Window Menu
   QMenu *m_menuFile = nullptr;
   QMenu *m_menuEdit = nullptr;
   QMenu *m_menuView = nullptr;
   QMenu *m_menuHelp = nullptr;
+  QMenu *m_menuProfiles = nullptr;
 
   // Window Actions
   QAction *m_actionAbout = nullptr;

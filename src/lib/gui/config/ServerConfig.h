@@ -57,6 +57,11 @@ public:
   bool useExternalConfig() const;
   void addClient(const QString &clientName);
 
+  /**
+   * @brief Read the layout and hotkeys again from the settings, e.g. after switching profiles
+   */
+  void reload();
+
 private:
   void recall();
   void setupComputers();

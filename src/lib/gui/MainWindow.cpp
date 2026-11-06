@@ -21,6 +21,7 @@
 #include "dialogs/SettingsDialog.h"
 
 #include "common/PlatformInfo.h"
+#include "common/Profiles.h"
 #include "common/Settings.h"
 #include "common/UrlConstants.h"
 #include "common/VersionInfo.h"
@@ -30,8 +31,10 @@
 #include "gui/ipc/DaemonIpcClient.h"
 #include "gui/widgets/LogDock.h"
 #include "net/FingerprintDatabase.h"
+#include "widgets/ProfileBar.h"
 #include "widgets/StatusBar.h"
 
+#include <QActionGroup>
 #include <QCheckBox>
 #include <QCloseEvent>
 #include <QComboBox>
@@ -71,6 +74,7 @@ MainWindow::MainWindow()
       m_menuEdit{new QMenu(this)},
       m_menuView{new QMenu(this)},
       m_menuHelp{new QMenu(this)},
+      m_menuProfiles{new QMenu(this)},
       m_actionAbout{new QAction(this)},
       m_actionMinimize{new QAction(this)},
       m_actionQuit{new QAction(this)},
@@ -130,6 +134,8 @@ MainWindow::MainWindow()
   QLocalServer::removeServer(m_guiSocketName);
   m_guiDupeChecker->listen(m_guiSocketName);
 
+  Profiles::ensureInitialized();
+
   createMenuBar();
   setupControls();
   updateText();
@@ -185,6 +191,9 @@ void MainWindow::restoreWindow()
     windowGeometry = geometry();
   } else {
     setGeometry(windowGeometry);
+    // The geometry may have been saved by a version with fewer controls, make sure everything fits
+    if (const auto minHeight = minimumSizeHint().height(); height() < minHeight)
+      resize(width(), minHeight);
   }
   m_expandedSize = geometry().size();
 
@@ -231,6 +240,10 @@ void MainWindow::setupControls()
     ui->btnSaveServerConfig->setIconSize(QSize(22, 22));
   }
   setStatusBar(m_statusBar);
+
+  m_profileBar = new ProfileBar(this);
+  if (auto layout = qobject_cast<QBoxLayout *>(ui->topLevelWidget->layout()))
+    layout->insertWidget(0, m_profileBar);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -309,6 +322,9 @@ void MainWindow::connectSlots()
   connect(ui->lineEditName, &QLineEdit::editingFinished, this, &MainWindow::setHostName);
 
   connect(m_networkMonitor, &NetworkMonitor::ipAddressesChanged, this, &MainWindow::updateIpLabel);
+
+  connect(m_profileBar, &ProfileBar::switchRequested, this, &MainWindow::switchProfile);
+  connect(m_profileBar, &ProfileBar::profilesChanged, this, &MainWindow::refreshProfiles);
 }
 
 void MainWindow::toggleLogVisible(bool visible)
@@ -696,8 +712,11 @@ void MainWindow::setupTrayIcon()
       {m_actionStartCore, m_actionRestartCore, m_actionStopCore, m_actionMinimize, m_actionRestore, m_actionTrayQuit}
   );
   trayMenu->insertSeparator(m_actionMinimize);
+  trayMenu->insertMenu(m_actionMinimize, m_menuProfiles);
+  trayMenu->insertSeparator(m_actionMinimize);
   trayMenu->insertSeparator(m_actionTrayQuit);
   m_trayIcon->setContextMenu(trayMenu);
+  refreshProfiles();
 
   setTrayIcon();
   m_trayIcon->show();
@@ -1085,6 +1104,7 @@ void MainWindow::updateText()
   m_menuEdit->setTitle(tr("&Edit"));
   m_menuView->setTitle(tr("&View"));
   m_menuHelp->setTitle(tr("&Help"));
+  m_menuProfiles->setTitle(tr("&Profiles"));
 
   m_actionMinimize->setText(tr("&Minimize to tray"));
   m_actionQuit->setText(tr("&Quit"));
@@ -1361,4 +1381,84 @@ bool MainWindow::canRunCore() const
   const bool isServer = mode == Settings::CoreMode::Server;
   const bool isClient = mode == Settings::CoreMode::Client;
   return ((isServer || isClient) && (isClient && !ui->cbHostname->currentText().isEmpty()) || isServer);
+}
+
+void MainWindow::switchProfile(const QString &name)
+{
+  if (name.compare(Profiles::active(), Qt::CaseInsensitive) == 0) {
+    refreshProfiles();
+    return;
+  }
+
+  const bool wasStarted = m_coreProcess.isStarted();
+
+  // Make sure what is on screen is stored in the profile we are leaving
+  saveSettings();
+
+  if (!Profiles::switchTo(name)) {
+    QMessageBox::warning(this, tr("Profile"), tr("Could not load the profile \"%1\".").arg(name));
+    refreshProfiles();
+    return;
+  }
+
+  m_serverConfig.reload();
+  m_serverConfig.updateServerName();
+
+  // Show the mode stored in the new profile, both buttons are unchecked when no mode was chosen yet
+  {
+    const auto mode = Settings::value(Settings::Core::CoreMode).value<Settings::CoreMode>();
+    const QSignalBlocker serverBlocker(ui->rbModeServer);
+    const QSignalBlocker clientBlocker(ui->rbModeClient);
+    ui->rbModeServer->setAutoExclusive(false);
+    ui->rbModeClient->setAutoExclusive(false);
+    ui->rbModeServer->setChecked(mode == Settings::CoreMode::Server);
+    ui->rbModeClient->setChecked(mode == Settings::CoreMode::Client);
+    ui->rbModeServer->setAutoExclusive(true);
+    ui->rbModeClient->setAutoExclusive(true);
+  }
+
+  m_serverStartIPs.clear();
+  m_serverStartSuggestedIP.clear();
+  applyConfig();
+  refreshProfiles();
+
+  //: %1 is the name of a profile
+  m_statusBar->showMessage(tr("Profile \"%1\" is now active").arg(Profiles::active()), 5000);
+
+  // Keep running with the new profile, restart waits for the old core to exit first
+  if (wasStarted) {
+    if (m_coreProcess.mode() == CoreMode::None)
+      stopCore();
+    else
+      m_coreProcess.restart();
+  }
+}
+
+void MainWindow::refreshProfiles()
+{
+  if (m_profileBar)
+    m_profileBar->refresh();
+
+  // Old actions and their group are replaced; deleteLater as one of them may be the action being triggered
+  const auto oldGroups = m_menuProfiles->findChildren<QActionGroup *>(QString(), Qt::FindDirectChildrenOnly);
+  for (auto oldGroup : oldGroups)
+    oldGroup->deleteLater();
+  const auto oldActions = m_menuProfiles->actions();
+  for (auto oldAction : oldActions) {
+    m_menuProfiles->removeAction(oldAction);
+    oldAction->deleteLater();
+  }
+
+  auto group = new QActionGroup(m_menuProfiles);
+  group->setExclusive(true);
+  const auto active = Profiles::active();
+  const auto profiles = Profiles::list();
+  for (const auto &name : profiles) {
+    auto action = new QAction(name, group);
+    m_menuProfiles->addAction(action);
+    action->setCheckable(true);
+    action->setChecked(name == active);
+    connect(action, &QAction::triggered, this, [this, name] { switchProfile(name); }, Qt::QueuedConnection);
+  }
+  m_menuProfiles->setEnabled(!profiles.isEmpty());
 }

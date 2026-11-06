@@ -105,6 +105,8 @@ add_library(${target} STATIC
   widgets/LogDock.h
   widgets/LogWidget.h
   widgets/LogWidget.cpp
+  widgets/ProfileBar.cpp
+  widgets/ProfileBar.h
   widgets/NewComputerWidget.cpp
   widgets/NewComputerWidget.h
   widgets/RemoveComputerWidget.cpp

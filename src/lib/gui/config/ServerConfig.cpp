@@ -101,6 +101,11 @@ void ServerConfig::commit()
   settings().endGroup();
 }
 
+void ServerConfig::reload()
+{
+  recall();
+}
+
 void ServerConfig::recall()
 {
   qDebug("recalling server config");
