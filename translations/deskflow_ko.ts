@@ -404,7 +404,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <source>Compare the fingerprints in this dialog to those on the %1.
 Only connect if they match!</source>
-        <translation>이 대화상자에 표시된 핑거프린팅을 %1의 핑거프린팅과 비교하세요.
+        <translation type="vanished">이 대화상자에 표시된 핑거프린팅을 %1의 핑거프린팅과 비교하세요.
 일치할 때만 연결하세요!</translation>
     </message>
     <message>
@@ -413,7 +413,7 @@ Only connect if they match!</source>
     </message>
     <message>
         <source>client</source>
-        <translation>클라이언트</translation>
+        <translation type="vanished">클라이언트</translation>
     </message>
     <message>
         <source>
@@ -429,7 +429,7 @@ Trust client and allow connection?
     </message>
     <message>
         <source>server</source>
-        <translation>서버</translation>
+        <translation type="vanished">서버</translation>
     </message>
     <message>
         <source>
@@ -463,12 +463,26 @@ Do you want to connect to the server?
         <source>Display the fingerprint as a hash</source>
         <translation>핑거프린팅을 해시로 표시</translation>
     </message>
+    <message>
+        <source>Check that the client&apos;s pairing code matches the code shown on that computer.
+Only allow the connection if they match!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check that the server&apos;s pairing code matches the code shown on the server.
+Only connect if they match!</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>FingerprintPreview</name>
     <message>
         <source>Invalid hash format</source>
         <translation>잘못된 해시 형식</translation>
+    </message>
+    <message>
+        <source>Pairing code, the same code is shown on the other computer</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -886,6 +900,15 @@ Additionally, check you are able to %1 the server config file: %2</source>
     </message>
     <message>
         <source>Network changed, reconnecting...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pairing code: %1</source>
+        <extracomment>%1 is a code like &quot;482 913 077 251&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Other computers show this code the first time they connect. Only accept them if the codes match.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

@@ -182,6 +182,19 @@
          </layout>
         </widget>
        </item>
+       <item row="2" column="0" colspan="3">
+        <widget class="QLabel" name="lblPairingCode">
+         <property name="role" stdset="0">
+          <string notr="true">caption</string>
+         </property>
+         <property name="text">
+          <string notr="true">lblPairingCode</string>
+         </property>
+         <property name="textInteractionFlags">
+          <set>Qt::TextInteractionFlag::TextSelectableByMouse</set>
+         </property>
+        </widget>
+       </item>
        <item row="0" column="1" rowspan="2">
         <spacer name="headerSpacer">
          <property name="orientation">

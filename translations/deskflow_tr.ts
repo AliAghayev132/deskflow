@@ -404,7 +404,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <source>Compare the fingerprints in this dialog to those on the %1.
 Only connect if they match!</source>
-        <translation>Bu penceredeki parmak izlerini %1 tarafındakilerle karşılaştırın.
+        <translation type="vanished">Bu penceredeki parmak izlerini %1 tarafındakilerle karşılaştırın.
 Yalnızca eşleşiyorlarsa bağlanın!</translation>
     </message>
     <message>
@@ -413,7 +413,7 @@ Yalnızca eşleşiyorlarsa bağlanın!</translation>
     </message>
     <message>
         <source>client</source>
-        <translation>istemci</translation>
+        <translation type="vanished">istemci</translation>
     </message>
     <message>
         <source>
@@ -429,7 +429,7 @@ Trust client and allow connection?
     </message>
     <message>
         <source>server</source>
-        <translation>sunucu</translation>
+        <translation type="vanished">sunucu</translation>
     </message>
     <message>
         <source>
@@ -463,12 +463,28 @@ Sunucuya bağlanmak istiyor musunuz?
         <source>Display the fingerprint as a hash</source>
         <translation>Parmak izini özet olarak göster</translation>
     </message>
+    <message>
+        <source>Check that the client&apos;s pairing code matches the code shown on that computer.
+Only allow the connection if they match!</source>
+        <translation>İstemcinin eşleştirme kodunun o bilgisayarda gösterilen kodla aynı olduğunu kontrol edin.
+Yalnızca eşleşiyorlarsa izin verin!</translation>
+    </message>
+    <message>
+        <source>Check that the server&apos;s pairing code matches the code shown on the server.
+Only connect if they match!</source>
+        <translation>Sunucunun eşleştirme kodunun sunucuda gösterilen kodla aynı olduğunu kontrol edin.
+Yalnızca eşleşiyorlarsa bağlanın!</translation>
+    </message>
 </context>
 <context>
     <name>FingerprintPreview</name>
     <message>
         <source>Invalid hash format</source>
         <translation>Geçersiz özet biçimi</translation>
+    </message>
+    <message>
+        <source>Pairing code, the same code is shown on the other computer</source>
+        <translation>Eşleştirme kodu, aynı kod diğer bilgisayarda da gösterilir</translation>
     </message>
 </context>
 <context>
@@ -887,6 +903,15 @@ Bağlı bir IP artık geçersiz, sunucuyu yeniden başlatmanız gerekebilir.</tr
     <message>
         <source>Network changed, reconnecting...</source>
         <translation>Ağ değişti, yeniden bağlanıyor...</translation>
+    </message>
+    <message>
+        <source>Pairing code: %1</source>
+        <extracomment>%1 is a code like &quot;482 913 077 251&quot;</extracomment>
+        <translation>Eşleştirme kodu: %1</translation>
+    </message>
+    <message>
+        <source>Other computers show this code the first time they connect. Only accept them if the codes match.</source>
+        <translation>Diğer bilgisayarlar ilk kez bağlandıklarında bu kodu gösterir. Yalnızca kodlar eşleşiyorsa kabul edin.</translation>
     </message>
 </context>
 <context>

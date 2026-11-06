@@ -45,6 +45,8 @@ add_library(${target} STATIC
   core/CoreProcess.cpp
   core/CoreProcess.h
   core/NetworkMonitor.cpp
+  core/PairingCode.cpp
+  core/PairingCode.h
   core/ServerDiscovery.cpp
   core/ServerDiscovery.h
   core/WakeOnLan.cpp

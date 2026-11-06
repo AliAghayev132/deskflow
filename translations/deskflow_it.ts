@@ -408,7 +408,7 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <source>client</source>
-        <translation>client</translation>
+        <translation type="vanished">client</translation>
     </message>
     <message>
         <source>Connecting to a new server</source>
@@ -416,12 +416,12 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <source>server</source>
-        <translation>server</translation>
+        <translation type="vanished">server</translation>
     </message>
     <message>
         <source>Compare the fingerprints in this dialog to those on the %1.
 Only connect if they match!</source>
-        <translation>Confronta le impronte digitali in questa finestra di dialogo con quelle su %1.  
+        <translation type="vanished">Confronta le impronte digitali in questa finestra di dialogo con quelle su %1.  
 Connettiti solo se corrispondono!</translation>
     </message>
     <message>
@@ -464,12 +464,26 @@ Vuoi connetterti al server?
         <source>Display the fingerprint as a hash</source>
         <translation>Visualizza l&apos;impronta digitale come hash</translation>
     </message>
+    <message>
+        <source>Check that the client&apos;s pairing code matches the code shown on that computer.
+Only allow the connection if they match!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check that the server&apos;s pairing code matches the code shown on the server.
+Only connect if they match!</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>FingerprintPreview</name>
     <message>
         <source>Invalid hash format</source>
         <translation>Formato hash non valido</translation>
+    </message>
+    <message>
+        <source>Pairing code, the same code is shown on the other computer</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -887,6 +901,15 @@ Inoltre, verifica di poter %1 il file di configurazione del server: %2</translat
     </message>
     <message>
         <source>Network changed, reconnecting...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pairing code: %1</source>
+        <extracomment>%1 is a code like &quot;482 913 077 251&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Other computers show this code the first time they connect. Only accept them if the codes match.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

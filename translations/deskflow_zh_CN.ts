@@ -404,7 +404,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <source>Compare the fingerprints in this dialog to those on the %1.
 Only connect if they match!</source>
-        <translation>请将此对话框中的指纹与 %1 上的指纹进行比对。
+        <translation type="vanished">请将此对话框中的指纹与 %1 上的指纹进行比对。
 只有两者匹配时才进行连接！</translation>
     </message>
     <message>
@@ -413,7 +413,7 @@ Only connect if they match!</source>
     </message>
     <message>
         <source>client</source>
-        <translation>客户端</translation>
+        <translation type="vanished">客户端</translation>
     </message>
     <message>
         <source>
@@ -429,7 +429,7 @@ Trust client and allow connection?
     </message>
     <message>
         <source>server</source>
-        <translation>服务器</translation>
+        <translation type="vanished">服务器</translation>
     </message>
     <message>
         <source>
@@ -463,12 +463,26 @@ Do you want to connect to the server?
         <source>Display the fingerprint as a hash</source>
         <translation>以哈希值形式显示指纹</translation>
     </message>
+    <message>
+        <source>Check that the client&apos;s pairing code matches the code shown on that computer.
+Only allow the connection if they match!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check that the server&apos;s pairing code matches the code shown on the server.
+Only connect if they match!</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>FingerprintPreview</name>
     <message>
         <source>Invalid hash format</source>
         <translation>无效的哈希格式</translation>
+    </message>
+    <message>
+        <source>Pairing code, the same code is shown on the other computer</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -886,6 +900,15 @@ Additionally, check you are able to %1 the server config file: %2</source>
     </message>
     <message>
         <source>Network changed, reconnecting...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pairing code: %1</source>
+        <extracomment>%1 is a code like &quot;482 913 077 251&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Other computers show this code the first time they connect. Only accept them if the codes match.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

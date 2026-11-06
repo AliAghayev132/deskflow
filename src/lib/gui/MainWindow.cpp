@@ -30,6 +30,7 @@
 #include "gui/Messages.h"
 #include "gui/TlsUtility.h"
 #include "gui/core/CoreProcess.h"
+#include "gui/core/PairingCode.h"
 #include "gui/core/ServerDiscovery.h"
 #include "gui/core/WakeOnLan.h"
 #include "gui/ipc/DaemonIpcClient.h"
@@ -409,8 +410,8 @@ void MainWindow::settingsChanged(const QString &key)
         TlsUtility::generateCertificate();
       }
       m_fingerprint = {QCryptographicHash::Sha256, TlsUtility::certFingerprint()};
-      updateFingerprintButton();
     }
+    updateFingerprintButton();
     updateSecurityIcon(m_statusBar->securityIconVisible());
     return;
   }
@@ -1109,7 +1110,17 @@ void MainWindow::coreConnectionStateChanged(ConnectionState state)
 
 void MainWindow::updateFingerprintButton()
 {
-  m_statusBar->setBtnFingerprintVisible(TlsUtility::isEnabled() && !m_fingerprint.data.isEmpty());
+  const bool show = TlsUtility::isEnabled() && !m_fingerprint.data.isEmpty();
+  m_statusBar->setBtnFingerprintVisible(show);
+
+  // Shown all the time so it can be compared when another computer connects for the first time
+  const auto code = show ? pairingCode(m_fingerprint.data) : QString();
+  ui->lblPairingCode->setVisible(!code.isEmpty());
+  //: %1 is a code like "482 913 077 251"
+  ui->lblPairingCode->setText(tr("Pairing code: %1").arg(code));
+  ui->lblPairingCode->setToolTip(
+      tr("Other computers show this code the first time they connect. Only accept them if the codes match.")
+  );
 }
 
 void MainWindow::hide()

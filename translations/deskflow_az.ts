@@ -405,7 +405,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <source>Compare the fingerprints in this dialog to those on the %1.
 Only connect if they match!</source>
-        <translation>Bu pəncərədəki barmaq izlərini %1 tərəfindəkilərlə müqayisə edin.
+        <translation type="vanished">Bu pəncərədəki barmaq izlərini %1 tərəfindəkilərlə müqayisə edin.
 Yalnız eyni olduqda qoşulun!</translation>
     </message>
     <message>
@@ -414,7 +414,7 @@ Yalnız eyni olduqda qoşulun!</translation>
     </message>
     <message>
         <source>client</source>
-        <translation>klient</translation>
+        <translation type="vanished">klient</translation>
     </message>
     <message>
         <source>
@@ -430,7 +430,7 @@ Klientə etibar edib qoşulmaya icazə verilsin?
     </message>
     <message>
         <source>server</source>
-        <translation>server</translation>
+        <translation type="vanished">server</translation>
     </message>
     <message>
         <source>
@@ -464,12 +464,28 @@ Serverə qoşulmaq istəyirsiniz?
         <source>Display the fingerprint as a hash</source>
         <translation>Barmaq izini hash kimi göstər</translation>
     </message>
+    <message>
+        <source>Check that the client&apos;s pairing code matches the code shown on that computer.
+Only allow the connection if they match!</source>
+        <translation>Klientin qoşulma kodunun həmin kompüterdə göstərilən kodla eyni olduğunu yoxlayın.
+Yalnız eyni olduqda icazə verin!</translation>
+    </message>
+    <message>
+        <source>Check that the server&apos;s pairing code matches the code shown on the server.
+Only connect if they match!</source>
+        <translation>Serverin qoşulma kodunun serverdə göstərilən kodla eyni olduğunu yoxlayın.
+Yalnız eyni olduqda qoşulun!</translation>
+    </message>
 </context>
 <context>
     <name>FingerprintPreview</name>
     <message>
         <source>Invalid hash format</source>
         <translation>Yanlış hash formatı</translation>
+    </message>
+    <message>
+        <source>Pairing code, the same code is shown on the other computer</source>
+        <translation>Qoşulma kodu, eyni kod digər kompüterdə də göstərilir</translation>
     </message>
 </context>
 <context>
@@ -888,6 +904,15 @@ Bağlanmış IP artıq keçərsizdir, serveri yenidən başlatmaq lazım ola bil
     <message>
         <source>Network changed, reconnecting...</source>
         <translation>Şəbəkə dəyişdi, yenidən qoşulur...</translation>
+    </message>
+    <message>
+        <source>Pairing code: %1</source>
+        <extracomment>%1 is a code like &quot;482 913 077 251&quot;</extracomment>
+        <translation>Qoşulma kodu: %1</translation>
+    </message>
+    <message>
+        <source>Other computers show this code the first time they connect. Only accept them if the codes match.</source>
+        <translation>Digər kompüterlər ilk dəfə qoşulanda bu kodu göstərir. Yalnız kodlar eyni olduqda qəbul edin.</translation>
     </message>
 </context>
 <context>
