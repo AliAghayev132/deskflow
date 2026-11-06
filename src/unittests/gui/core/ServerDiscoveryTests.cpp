@@ -194,4 +194,102 @@ void ServerDiscoveryTests::wakeSendsPacket()
   QVERIFY(!WakeOnLan::wake("bad", receiver.localPort(), {QHostAddress::LocalHost}));
 }
 
+void ServerDiscoveryTests::helloRoundTrip()
+{
+  const auto data = ServerDiscovery::encodeHello("laptop", "aa:bb:cc:dd:ee:ff", 42);
+  QCOMPARE(ServerDiscovery::messageType(data), QStringLiteral("hello"));
+  QCOMPARE(ServerDiscovery::messageId(data), std::optional<quint32>(42));
+
+  const auto peer = ServerDiscovery::parseHello(data, QHostAddress("::ffff:192.168.1.7"), 50000);
+  QVERIFY(peer.has_value());
+  QCOMPARE(peer->name, QStringLiteral("laptop"));
+  QCOMPARE(peer->address.toString(), QStringLiteral("192.168.1.7"));
+  QCOMPARE(peer->port, quint16(50000));
+  QCOMPARE(peer->mac, QStringLiteral("AA:BB:CC:DD:EE:FF"));
+
+  const auto pong = ServerDiscovery::encodeEcho("pong", 4000000000u);
+  QCOMPARE(ServerDiscovery::messageType(pong), QStringLiteral("pong"));
+  QCOMPARE(ServerDiscovery::messageId(pong), std::optional<quint32>(4000000000u));
+
+  // Older versions don't know these messages and must not mistake them for queries
+  QVERIFY(!ServerDiscovery::isQuery(data));
+  QVERIFY(!ServerDiscovery::parseAnnounce(data, QHostAddress("10.0.0.1")));
+}
+
+void ServerDiscoveryTests::rejectsBadHello()
+{
+  const QHostAddress from("10.0.0.2");
+  QVERIFY(!ServerDiscovery::parseHello(ServerDiscovery::encodeHello("", "", 1), from, 5000));
+  QVERIFY(!ServerDiscovery::parseHello(ServerDiscovery::encodeHello("pc", "", 0), from, 5000));
+  QVERIFY(!ServerDiscovery::parseHello(ServerDiscovery::encodeHello("pc", "", 1), QHostAddress(), 5000));
+  QVERIFY(!ServerDiscovery::parseHello(ServerDiscovery::encodeHello("pc", "", 1), from, 0));
+  QVERIFY(!ServerDiscovery::parseHello(ServerDiscovery::encodeQuery(), from, 5000));
+  QVERIFY(!ServerDiscovery::messageId(R"({"app":"deskflow","v":1,"type":"pong","id":-3})"));
+  QVERIFY(!ServerDiscovery::messageId(R"({"app":"deskflow","v":1,"type":"pong","id":5000000000})"));
+  QVERIFY(ServerDiscovery::messageType("nonsense").isEmpty());
+}
+
+void ServerDiscoveryTests::hostPart()
+{
+  QCOMPARE(ServerDiscovery::hostPart("192.168.1.5"), QStringLiteral("192.168.1.5"));
+  QCOMPARE(ServerDiscovery::hostPart("192.168.1.5:25000"), QStringLiteral("192.168.1.5"));
+  QCOMPARE(ServerDiscovery::hostPart(" office.local , 10.0.0.2"), QStringLiteral("office.local"));
+  QCOMPARE(ServerDiscovery::hostPart("fe80::1"), QStringLiteral("fe80::1"));
+  QCOMPARE(ServerDiscovery::hostPart("[fe80::1]:24800"), QStringLiteral("fe80::1"));
+  QCOMPARE(ServerDiscovery::hostPart(""), QString());
+}
+
+void ServerDiscoveryTests::linkMeasuresLatency()
+{
+  ServerDiscovery server(nullptr, m_testPort);
+  QVERIFY(server.startResponding("server", 24800, true));
+  QSignalSpy seen(&server, &ServerDiscovery::clientSeen);
+  QSignalSpy serverLatency(&server, &ServerDiscovery::latencyMeasured);
+
+  ServerDiscovery client(nullptr, m_testPort);
+  QSignalSpy clientLatency(&client, &ServerDiscovery::latencyMeasured);
+  client.startLink("laptop", "127.0.0.1:24800");
+  QVERIFY(client.isLinked());
+
+  // The first hello goes out right away and is answered with a welcome
+  QVERIFY(clientLatency.wait(2000));
+  QCOMPARE(clientLatency.first().at(0).toString(), QStringLiteral("127.0.0.1:24800"));
+  QVERIFY(clientLatency.first().at(1).toInt() >= 0);
+
+  QCOMPARE(seen.count(), 1);
+  const auto peer = seen.first().at(0).value<deskflow::gui::LinkPeer>();
+  QCOMPARE(peer.name, QStringLiteral("laptop"));
+  QCOMPARE(server.linkPeers().size(), 1);
+
+  // The server pings the clients it knows on its own schedule
+  QVERIFY(serverLatency.wait(ServerDiscovery::kLinkInterval + 2000));
+  QCOMPARE(serverLatency.first().at(0).toString(), QStringLiteral("laptop"));
+
+  client.stopLink();
+  QVERIFY(!client.isLinked());
+  server.stopResponding();
+  QVERIFY(server.linkPeers().isEmpty());
+}
+
+void ServerDiscoveryTests::hiddenServerStillAnswersHello()
+{
+  ServerDiscovery server(nullptr, m_testPort);
+  QVERIFY(server.startResponding("hidden", 24800, true, false));
+  QVERIFY(!server.isDiscoverable());
+
+  // Not found by a scan...
+  ServerDiscovery scanner(nullptr, m_testPort);
+  scanner.addQueryTarget(QHostAddress::LocalHost);
+  QSignalSpy finished(&scanner, &ServerDiscovery::scanFinished);
+  scanner.scan(400);
+  QVERIFY(finished.wait(3000));
+  QVERIFY(scanner.servers().isEmpty());
+
+  // ...but its connected clients still get answers
+  ServerDiscovery client(nullptr, m_testPort);
+  QSignalSpy latency(&client, &ServerDiscovery::latencyMeasured);
+  client.startLink("laptop", "127.0.0.1");
+  QVERIFY(latency.wait(2000));
+}
+
 QTEST_MAIN(ServerDiscoveryTests)

@@ -36,6 +36,7 @@ namespace deskflow::gui {
 class ClipboardHistory;
 class ServerDiscovery;
 struct DiscoveredServer;
+struct LinkPeer;
 } // namespace deskflow::gui
 class ConnectionsPanel;
 class ProfileBar;
@@ -193,6 +194,22 @@ private:
   void wakeServer();
 
   /**
+   * @brief Remember the MAC of a connected client so the server can wake it up later
+   */
+  void rememberClient(const deskflow::gui::LinkPeer &peer);
+
+  /**
+   * @brief Fill the wake up menu with the computers we know a MAC for, called each time it opens
+   */
+  void refreshWakeMenu();
+  void wakeComputer(const QString &name, const QString &mac);
+
+  /**
+   * @brief Say hello to the server while connected, for the round trip time and Wake-on-LAN
+   */
+  void updateLink();
+
+  /**
    * @brief Runs every few seconds: switches profile when the network changes and reconnects a client after
    * sleep or a network change
    */
@@ -283,6 +300,7 @@ private:
   QAction *m_actionSetupWizard = nullptr;
   deskflow::gui::ClipboardHistory *m_clipboardHistory = nullptr;
   QMenu *m_menuClipboard = nullptr;
+  QMenu *m_menuWake = nullptr;
   QString m_currentIpAddress;
 
   // Server IP strategy optimization

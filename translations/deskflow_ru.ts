@@ -392,6 +392,16 @@ p, li { white-space: pre-wrap; }
         <source>not connected</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>&lt;1 ms</source>
+        <extracomment>Round trip time below one millisecond</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 ms</source>
+        <extracomment>Round trip time in milliseconds, e.g. &quot;12 ms&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>FingerprintDialog</name>
@@ -884,7 +894,7 @@ Additionally, check you are able to %1 the server config file: %2</source>
     </message>
     <message>
         <source>Wake-up signal sent to %1, it may take a minute to start</source>
-        <extracomment>%1 is the server&apos;s address</extracomment>
+        <extracomment>%1 is a computer name or address</extracomment>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -947,6 +957,27 @@ Additionally, check you are able to %1 the server config file: %2</source>
     </message>
     <message>
         <source>C&amp;lear history</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Wake up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No computers to wake yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Computers are added here once they have been connected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (connected)</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Forget these computers</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

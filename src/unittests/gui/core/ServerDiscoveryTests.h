@@ -26,6 +26,11 @@ private Q_SLOTS:
   void normalizesMac();
   void magicPacket();
   void wakeSendsPacket();
+  void helloRoundTrip();
+  void rejectsBadHello();
+  void hostPart();
+  void linkMeasuresLatency();
+  void hiddenServerStillAnswersHello();
 
 private:
   // A port of our own so tests don't clash with a running Deskflow

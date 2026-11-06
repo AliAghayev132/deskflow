@@ -100,7 +100,8 @@ MainWindow::MainWindow()
       m_watchTimer{new QTimer(this)},
       m_actionSetupWizard{new QAction(this)},
       m_clipboardHistory{new ClipboardHistory(QGuiApplication::clipboard(), this)},
-      m_menuClipboard{new QMenu(this)}
+      m_menuClipboard{new QMenu(this)},
+      m_menuWake{new QMenu(this)}
 {
   ui->setupUi(this);
 
@@ -154,8 +155,11 @@ MainWindow::MainWindow()
   m_clipboardHistory->setEnabled(Settings::value(Settings::Gui::ClipboardHistory).toBool());
   m_menuClipboard->setToolTipsVisible(true);
   connect(m_menuClipboard, &QMenu::aboutToShow, this, &MainWindow::refreshClipboardMenu);
+  m_menuWake->setToolTipsVisible(true);
+  connect(m_menuWake, &QMenu::aboutToShow, this, &MainWindow::refreshWakeMenu);
   // macOS builds the tray menu natively, so it needs items before it is first opened
   refreshClipboardMenu();
+  refreshWakeMenu();
 
   createMenuBar();
   setupControls();
@@ -362,6 +366,8 @@ void MainWindow::connectSlots()
 
   connect(ui->btnFindServers, &QPushButton::clicked, this, [this] { findServers(); });
   connect(m_discovery, &ServerDiscovery::scanFinished, this, &MainWindow::serversFound);
+  connect(m_discovery, &ServerDiscovery::clientSeen, this, &MainWindow::rememberClient);
+  connect(m_discovery, &ServerDiscovery::latencyMeasured, m_connectionsPanel, &ConnectionsPanel::setLatency);
 
   connect(m_actionSetupWizard, &QAction::triggered, this, &MainWindow::showOnboarding);
   connect(m_watchTimer, &QTimer::timeout, this, &MainWindow::watchSystem);
@@ -742,6 +748,8 @@ void MainWindow::createMenuBar()
   m_menuFile->addAction(m_actionRestartCore);
   m_menuFile->addAction(m_actionStopCore);
   m_menuFile->addSeparator();
+  m_menuFile->addMenu(m_menuWake);
+  m_menuFile->addSeparator();
   m_menuFile->addAction(m_actionQuit);
 
   m_menuEdit->addAction(m_actionSettings);
@@ -772,6 +780,7 @@ void MainWindow::setupTrayIcon()
   trayMenu->insertSeparator(m_actionMinimize);
   trayMenu->insertMenu(m_actionMinimize, m_menuProfiles);
   trayMenu->insertMenu(m_actionMinimize, m_menuClipboard);
+  trayMenu->insertMenu(m_actionMinimize, m_menuWake);
   trayMenu->insertSeparator(m_actionMinimize);
   trayMenu->insertSeparator(m_actionTrayQuit);
   m_trayIcon->setContextMenu(trayMenu);
@@ -1040,6 +1049,7 @@ void MainWindow::coreProcessStateChanged(ProcessState state)
   using enum ProcessState;
   updateStatus();
   updateDiscovery();
+  updateLink();
 
   if (state == Stopped || state == Stopping) {
     m_connectionsPanel->clear();
@@ -1093,6 +1103,7 @@ void MainWindow::coreConnectionStateChanged(ConnectionState state)
 
   if (m_coreProcess.mode() == CoreMode::Client && m_coreProcess.isStarted())
     m_connectionsPanel->showClient(state, ui->cbHostname->currentText());
+  updateLink();
 
   // always assume connection is not secure when connection changes
   // to anything except connected. the only way the padlock shows is
@@ -1189,6 +1200,7 @@ void MainWindow::updateText()
   m_menuHelp->setTitle(tr("&Help"));
   m_menuProfiles->setTitle(tr("&Profiles"));
   m_menuClipboard->setTitle(tr("&Clipboard history"));
+  m_menuWake->setTitle(tr("&Wake up"));
 
   m_actionMinimize->setText(tr("&Minimize to tray"));
   m_actionQuit->setText(tr("&Quit"));
@@ -1588,17 +1600,100 @@ void MainWindow::updateDiscovery()
   if (!m_discovery)
     return;
 
-  const bool respond = m_coreProcess.mode() == CoreMode::Server && m_coreProcess.isStarted() &&
-                       Settings::value(Settings::Server::Discoverable).toBool();
-  if (!respond) {
+  // A running server always answers its clients' hellos, scans only while discoverable
+  if (m_coreProcess.mode() != CoreMode::Server || !m_coreProcess.isStarted()) {
     m_discovery->stopResponding();
     return;
   }
 
   m_discovery->startResponding(
       Settings::value(Settings::Core::ComputerName).toString(),
-      static_cast<quint16>(Settings::value(Settings::Core::Port).toInt()), TlsUtility::isEnabled()
+      static_cast<quint16>(Settings::value(Settings::Core::Port).toInt()), TlsUtility::isEnabled(),
+      Settings::value(Settings::Server::Discoverable).toBool()
   );
+}
+
+void MainWindow::updateLink()
+{
+  if (!m_discovery)
+    return;
+
+  const bool connected = m_coreProcess.mode() == CoreMode::Client && m_coreProcess.isStarted() &&
+                         m_coreProcess.connectionState() == ConnectionState::Connected;
+  if (!connected) {
+    m_discovery->stopLink();
+    return;
+  }
+  m_discovery->startLink(Settings::value(Settings::Core::ComputerName).toString(), ui->cbHostname->currentText());
+}
+
+void MainWindow::rememberClient(const LinkPeer &peer)
+{
+  // Only computers the core accepted, a hello alone proves nothing
+  if (peer.mac.isEmpty() || !m_connectionsPanel->connectedNames().contains(peer.name))
+    return;
+
+  auto entries = Settings::value(Settings::Server::KnownClients).toStringList();
+  const auto entry = QStringLiteral("%1=%2").arg(peer.mac, peer.name);
+  if (entries.contains(entry))
+    return;
+  entries.removeIf([&peer](const QString &existing) { return existing.section(QLatin1Char('='), 1) == peer.name; });
+  entries.append(entry);
+  Settings::setValue(Settings::Server::KnownClients, entries);
+  qInfo().noquote() << "remembered" << peer.name << "for wake on lan";
+}
+
+void MainWindow::refreshWakeMenu()
+{
+  m_menuWake->clear();
+
+  // Name and MAC of every computer we could wake: the remembered server and the clients seen
+  QList<QPair<QString, QString>> targets;
+  const auto serverMac = Settings::value(Settings::Client::WakeMac).toString();
+  if (!serverMac.isEmpty())
+    targets.append({Settings::value(Settings::Client::WakeHost).toString(), serverMac});
+  const auto clients = Settings::value(Settings::Server::KnownClients).toStringList();
+  for (const auto &entry : clients) {
+    const auto mac = entry.section(QLatin1Char('='), 0, 0);
+    const auto name = entry.section(QLatin1Char('='), 1);
+    if (!name.isEmpty() && !ServerDiscovery::normalizedMac(mac).isEmpty())
+      targets.append({name, mac});
+  }
+
+  if (targets.isEmpty()) {
+    auto none = m_menuWake->addAction(tr("No computers to wake yet"));
+    none->setEnabled(false);
+    none->setToolTip(tr("Computers are added here once they have been connected"));
+    return;
+  }
+
+  const auto connected = m_connectionsPanel->connectedNames();
+  for (const auto &[name, mac] : std::as_const(targets)) {
+    const bool online = connected.contains(name);
+    //: %1 is a computer name
+    auto action = m_menuWake->addAction(online ? tr("%1 (connected)").arg(name) : name);
+    action->setEnabled(!online);
+    action->setToolTip(mac);
+    connect(action, &QAction::triggered, this, [this, name, mac] { wakeComputer(name, mac); });
+  }
+
+  m_menuWake->addSeparator();
+  auto forget = m_menuWake->addAction(tr("&Forget these computers"));
+  connect(forget, &QAction::triggered, this, [] {
+    Settings::setValue(Settings::Server::KnownClients, QStringList());
+    Settings::setValue(Settings::Client::WakeMac, QString());
+    Settings::setValue(Settings::Client::WakeHost, QString());
+  });
+}
+
+void MainWindow::wakeComputer(const QString &name, const QString &mac)
+{
+  if (WakeOnLan::wake(mac)) {
+    //: %1 is a computer name or address
+    m_statusBar->showMessage(tr("Wake-up signal sent to %1, it may take a minute to start").arg(name), 10000);
+  } else {
+    m_statusBar->showMessage(tr("Could not send the wake-up signal"), 8000);
+  }
 }
 
 void MainWindow::findServers(bool automatic)
@@ -1695,13 +1790,9 @@ void MainWindow::rememberServer(const DiscoveredServer &server)
 
 void MainWindow::wakeServer()
 {
-  const auto host = Settings::value(Settings::Client::WakeHost).toString();
-  if (WakeOnLan::wake(Settings::value(Settings::Client::WakeMac).toString())) {
-    //: %1 is the server's address
-    m_statusBar->showMessage(tr("Wake-up signal sent to %1, it may take a minute to start").arg(host), 10000);
-  } else {
-    m_statusBar->showMessage(tr("Could not send the wake-up signal"), 8000);
-  }
+  wakeComputer(
+      Settings::value(Settings::Client::WakeHost).toString(), Settings::value(Settings::Client::WakeMac).toString()
+  );
 }
 
 void MainWindow::watchSystem()

@@ -48,6 +48,26 @@ public:
   void refresh();
 
   /**
+   * @brief Show the round trip time to a connected computer, it disappears when no new value arrives
+   */
+  void setLatency(const QString &name, int milliseconds);
+
+  /**
+   * @brief Short text for a round trip time, e.g. "&lt;1 ms" or "12 ms"
+   */
+  static QString latencyText(int milliseconds);
+
+  /**
+   * @brief Round trip times older than this are no longer shown
+   */
+  static constexpr int kLatencyMaxAge = 15;
+
+  /**
+   * @brief Times from this value up are shown as slow
+   */
+  static constexpr int kSlowLatency = 50;
+
+  /**
    * @brief Short text for how long something has been connected, e.g. "just now" or "1 h 5 min"
    */
   static QString durationText(qint64 seconds);
@@ -70,6 +90,7 @@ private:
 
   void render();
   QString since(const QString &name) const;
+  QString latency(const QString &name) const;
 
   QLabel *m_title = nullptr;
   QLabel *m_body = nullptr;
@@ -78,4 +99,6 @@ private:
   QString m_server;
   QStringList m_clients;
   QHash<QString, QDateTime> m_since;
+  QHash<QString, int> m_latency;
+  QHash<QString, QDateTime> m_latencyAt;
 };

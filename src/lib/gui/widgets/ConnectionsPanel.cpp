@@ -16,6 +16,7 @@ namespace {
 // Readable on light and dark backgrounds
 const auto kConnectedColor = QStringLiteral("#1F9D5C");
 const auto kConnectingColor = QStringLiteral("#D18F00");
+const auto kSlowColor = QStringLiteral("#D18F00");
 } // namespace
 
 ConnectionsPanel::ConnectionsPanel(QWidget *parent)
@@ -52,6 +53,22 @@ QString ConnectionsPanel::durationText(qint64 seconds)
   return tr("%1 h %2 min").arg(minutes / 60).arg(minutes % 60);
 }
 
+QString ConnectionsPanel::latencyText(int milliseconds)
+{
+  if (milliseconds < 1)
+    //: Round trip time below one millisecond
+    return tr("<1 ms");
+  //: Round trip time in milliseconds, e.g. "12 ms"
+  return tr("%1 ms").arg(milliseconds);
+}
+
+void ConnectionsPanel::setLatency(const QString &name, int milliseconds)
+{
+  m_latency.insert(name, milliseconds);
+  m_latencyAt.insert(name, QDateTime::currentDateTime());
+  refresh();
+}
+
 void ConnectionsPanel::showServer(const QStringList &clients)
 {
   const auto now = QDateTime::currentDateTime();
@@ -61,6 +78,8 @@ void ConnectionsPanel::showServer(const QStringList &clients)
   }
   // Forget clients that left, so reconnecting starts a new duration
   m_since.removeIf([&clients](const auto &entry) { return !clients.contains(entry.key()); });
+  m_latency.removeIf([&clients](const auto &entry) { return !clients.contains(entry.key()); });
+  m_latencyAt.removeIf([&clients](const auto &entry) { return !clients.contains(entry.key()); });
 
   m_mode = Mode::Server;
   m_clients = clients;
@@ -76,6 +95,8 @@ void ConnectionsPanel::showClient(ConnectionState state, const QString &server)
     }
   } else {
     m_since.clear();
+    m_latency.clear();
+    m_latencyAt.clear();
   }
 
   m_mode = Mode::Client;
@@ -90,6 +111,8 @@ void ConnectionsPanel::clear()
   m_clients.clear();
   m_server.clear();
   m_since.clear();
+  m_latency.clear();
+  m_latencyAt.clear();
   render();
 }
 
@@ -113,6 +136,19 @@ void ConnectionsPanel::changeEvent(QEvent *event)
   QFrame::changeEvent(event);
   if (event->type() == QEvent::LanguageChange || event->type() == QEvent::PaletteChange)
     render();
+}
+
+QString ConnectionsPanel::latency(const QString &name) const
+{
+  const auto at = m_latencyAt.value(name);
+  if (!m_latency.contains(name) || !at.isValid() || at.secsTo(QDateTime::currentDateTime()) > kLatencyMaxAge)
+    return {};
+  const auto value = m_latency.value(name);
+  const auto text = latencyText(value).toHtmlEscaped();
+  const auto separator = QStringLiteral(" &middot; ");
+  if (value >= kSlowLatency)
+    return separator + QStringLiteral("<span style=\"color:%1\">%2</span>").arg(kSlowColor, text);
+  return separator + text;
 }
 
 QString ConnectionsPanel::since(const QString &name) const
@@ -142,7 +178,8 @@ void ConnectionsPanel::render()
     } else {
       QStringList parts;
       for (const auto &client : std::as_const(m_clients))
-        parts.append(item.arg(dot.arg(kConnectedColor), client.toHtmlEscaped(), muted, since(client)));
+        parts.append(item.arg(dot.arg(kConnectedColor), client.toHtmlEscaped(), muted, since(client) + latency(client))
+        );
       m_body->setText(parts.join(QStringLiteral("&nbsp;&nbsp;&nbsp;&nbsp;")));
     }
     break;
@@ -153,7 +190,7 @@ void ConnectionsPanel::render()
     const auto server = m_server.toHtmlEscaped();
     switch (m_clientState) {
     case ConnectionState::Connected:
-      m_body->setText(item.arg(dot.arg(kConnectedColor), server, muted, since(m_server)));
+      m_body->setText(item.arg(dot.arg(kConnectedColor), server, muted, since(m_server) + latency(m_server)));
       break;
     case ConnectionState::Connecting:
       //: %1 is the server name or address

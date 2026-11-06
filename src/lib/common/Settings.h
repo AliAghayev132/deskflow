@@ -112,6 +112,8 @@ public:
   {
     inline static const auto ClipboardSize = QStringLiteral("server/clipboardSize");
     inline static const auto Discoverable = QStringLiteral("server/discoverable");
+    // "MAC=name" for each client seen, so the server can wake them up
+    inline static const auto KnownClients = QStringLiteral("server/knownClients");
     inline static const auto DefaultLockToComputerState = QStringLiteral("server/defaultLockToComputerState");
     inline static const auto DisableLockToComputer = QStringLiteral("server/disableLockToComputer");
     inline static const auto EnableClipboard = QStringLiteral("server/enableClipboard");
@@ -352,6 +354,7 @@ private:
     , Server::DefaultLockToComputerState
     , Server::DisableLockToComputer
     , Server::Discoverable
+    , Server::KnownClients
     , Server::EnableClipboard
     , Server::EnableHeartbeat
     , Server::EnableSwitchDelay

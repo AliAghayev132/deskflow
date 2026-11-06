@@ -86,4 +86,32 @@ void ConnectionsPanelTests::clearHides()
   QVERIFY(panel.connectedNames().isEmpty());
 }
 
+void ConnectionsPanelTests::showsLatency()
+{
+  QCOMPARE(ConnectionsPanel::latencyText(0), QStringLiteral("<1 ms"));
+  QCOMPARE(ConnectionsPanel::latencyText(12), QStringLiteral("12 ms"));
+
+  ConnectionsPanel panel;
+  panel.showServer({"laptop", "desktop"});
+  panel.setLatency("laptop", 3);
+  QVERIFY(bodyText(panel).contains("3 ms"));
+  panel.setLatency("desktop", 0);
+  QVERIFY(bodyText(panel).contains("&lt;1 ms"));
+
+  // Slow links are highlighted
+  panel.setLatency("laptop", 80);
+  QVERIFY(bodyText(panel).contains("80 ms</span>"));
+
+  // A client that leaves takes its time with it
+  panel.showServer({"desktop"});
+  panel.showServer({"desktop", "laptop"});
+  QVERIFY(!bodyText(panel).contains("80 ms"));
+
+  panel.showClient(deskflow::core::ConnectionState::Connected, "10.0.0.2");
+  panel.setLatency("10.0.0.2", 7);
+  QVERIFY(bodyText(panel).contains("7 ms"));
+  panel.showClient(deskflow::core::ConnectionState::Disconnected, "10.0.0.2");
+  QVERIFY(!bodyText(panel).contains("7 ms"));
+}
+
 QTEST_MAIN(ConnectionsPanelTests)

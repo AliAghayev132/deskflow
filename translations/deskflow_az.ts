@@ -391,6 +391,16 @@ p, li { white-space: pre-wrap; }
         <source>not connected</source>
         <translation>qoşulmayıb</translation>
     </message>
+    <message>
+        <source>&lt;1 ms</source>
+        <extracomment>Round trip time below one millisecond</extracomment>
+        <translation>&lt;1 ms</translation>
+    </message>
+    <message>
+        <source>%1 ms</source>
+        <extracomment>Round trip time in milliseconds, e.g. &quot;12 ms&quot;</extracomment>
+        <translation>%1 ms</translation>
+    </message>
 </context>
 <context>
     <name>FingerprintDialog</name>
@@ -885,7 +895,7 @@ Bağlanmış IP artıq keçərsizdir, serveri yenidən başlatmaq lazım ola bil
     </message>
     <message>
         <source>Wake-up signal sent to %1, it may take a minute to start</source>
-        <extracomment>%1 is the server&apos;s address</extracomment>
+        <extracomment>%1 is a computer name or address</extracomment>
         <translation>Oyatma siqnalı %1 ünvanına göndərildi, işə düşməsi bir dəqiqə çəkə bilər</translation>
     </message>
     <message>
@@ -951,6 +961,27 @@ Bağlanmış IP artıq keçərsizdir, serveri yenidən başlatmaq lazım ola bil
     <message>
         <source>C&amp;lear history</source>
         <translation>Tarixçəni &amp;təmizlə</translation>
+    </message>
+    <message>
+        <source>&amp;Wake up</source>
+        <translation>&amp;Oyat</translation>
+    </message>
+    <message>
+        <source>No computers to wake yet</source>
+        <translation>Hələ oyadılacaq kompüter yoxdur</translation>
+    </message>
+    <message>
+        <source>Computers are added here once they have been connected</source>
+        <translation>Kompüterlər bir dəfə qoşulduqdan sonra bura əlavə olunur</translation>
+    </message>
+    <message>
+        <source>%1 (connected)</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation>%1 (qoşulub)</translation>
+    </message>
+    <message>
+        <source>&amp;Forget these computers</source>
+        <translation>Bu kompüterləri &amp;unut</translation>
     </message>
 </context>
 <context>

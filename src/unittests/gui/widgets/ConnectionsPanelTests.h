@@ -17,4 +17,5 @@ private Q_SLOTS:
   void serverListsClients();
   void clientShowsServerState();
   void clearHides();
+  void showsLatency();
 };
