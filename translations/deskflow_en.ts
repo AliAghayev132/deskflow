@@ -2,6 +2,27 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="en_US">
 <context>
+    <name>ConnectionsPanel</name>
+    <message numerus="yes">
+        <source>%n min</source>
+        <extracomment>Short form of a number of minutes, e.g. &quot;5 min&quot;</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>OnboardingDialog</name>
+    <message numerus="yes">
+        <source>Found %n server(s).</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>StatusBar</name>
     <message numerus="yes">
         <source>%1 is connected, with %n client(s): %2</source>

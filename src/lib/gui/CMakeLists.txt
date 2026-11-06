@@ -47,6 +47,8 @@ add_library(${target} STATIC
   core/NetworkMonitor.cpp
   core/ServerDiscovery.cpp
   core/ServerDiscovery.h
+  core/WakeOnLan.cpp
+  core/WakeOnLan.h
   core/NetworkMonitor.h
   dialogs/AboutDialog.cpp
   dialogs/AboutDialog.h
@@ -65,6 +67,8 @@ add_library(${target} STATIC
   dialogs/HelpDialog.cpp
   dialogs/HelpDialog.h
   dialogs/HotkeyDialog.cpp
+  dialogs/OnboardingDialog.cpp
+  dialogs/OnboardingDialog.h
   dialogs/HotkeyDialog.h
   dialogs/HotkeyDialog.ui
   dialogs/ServerConfigDialog.cpp
@@ -100,6 +104,8 @@ add_library(${target} STATIC
   validators/IpAddressValidator.cpp
   validators/IpAddressValidator.h
   widgets/ComputerSetupView.cpp
+  widgets/ConnectionsPanel.cpp
+  widgets/ConnectionsPanel.h
   widgets/ComputerTileDelegate.cpp
   widgets/ComputerTileDelegate.h
   widgets/ComputerSetupView.h

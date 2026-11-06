@@ -10,6 +10,7 @@
 #include <QJsonObject>
 #include <QNetworkDatagram>
 #include <QNetworkInterface>
+#include <QRegularExpression>
 #include <QTimer>
 #include <QUdpSocket>
 
@@ -80,16 +81,43 @@ QByteArray ServerDiscovery::encodeQuery()
   });
 }
 
-QByteArray ServerDiscovery::encodeAnnounce(const QString &name, quint16 port, bool tls)
+QByteArray ServerDiscovery::encodeAnnounce(const QString &name, quint16 port, bool tls, const QString &mac)
 {
-  return toJson({
-      {QStringLiteral("app"), kApp},
-      {QStringLiteral("v"), kProtocolVersion},
-      {QStringLiteral("type"), kTypeAnnounce},
-      {QStringLiteral("name"), name.left(kMaxNameLength)},
-      {QStringLiteral("port"), port},
-      {QStringLiteral("tls"), tls},
-  });
+  QJsonObject object{
+      {QStringLiteral("app"), kApp},           {QStringLiteral("v"), kProtocolVersion},
+      {QStringLiteral("type"), kTypeAnnounce}, {QStringLiteral("name"), name.left(kMaxNameLength)},
+      {QStringLiteral("port"), port},          {QStringLiteral("tls"), tls},
+  };
+  if (!mac.isEmpty())
+    object.insert(QStringLiteral("mac"), mac);
+  return toJson(object);
+}
+
+QString ServerDiscovery::normalizedMac(const QString &mac)
+{
+  static const auto macRegex = QRegularExpression(QStringLiteral("^([0-9A-F]{2}[:-]){5}[0-9A-F]{2}$"));
+  auto upper = mac.trimmed().toUpper();
+  if (!macRegex.match(upper).hasMatch())
+    return {};
+  upper.replace('-', ':');
+  // An all zero address is what loopback and some virtual adapters report
+  if (upper == QStringLiteral("00:00:00:00:00:00"))
+    return {};
+  return upper;
+}
+
+QString ServerDiscovery::macFacing(const QHostAddress &peer)
+{
+  const auto interfaces = QNetworkInterface::allInterfaces();
+  for (const auto &interface : interfaces) {
+    const auto entries = interface.addressEntries();
+    for (const auto &entry : entries) {
+      if (entry.ip().protocol() == QAbstractSocket::IPv4Protocol && entry.prefixLength() > 0 &&
+          peer.isInSubnet(entry.ip(), entry.prefixLength()))
+        return normalizedMac(interface.hardwareAddress());
+    }
+  }
+  return {};
 }
 
 bool ServerDiscovery::isQuery(const QByteArray &data)
@@ -113,6 +141,7 @@ std::optional<DiscoveredServer> ServerDiscovery::parseAnnounce(const QByteArray 
   server.address = from.toIPv4Address() != 0 ? QHostAddress(from.toIPv4Address()) : from;
   server.port = static_cast<quint16>(port);
   server.tls = message->value(QStringLiteral("tls")).toBool();
+  server.mac = normalizedMac(message->value(QStringLiteral("mac")).toString());
   if (server.name.isEmpty())
     server.name = server.address.toString();
   return server;
@@ -120,7 +149,9 @@ std::optional<DiscoveredServer> ServerDiscovery::parseAnnounce(const QByteArray 
 
 bool ServerDiscovery::startResponding(const QString &name, quint16 serverPort, bool tls)
 {
-  m_announce = encodeAnnounce(name, serverPort, tls);
+  m_name = name;
+  m_serverPort = serverPort;
+  m_tls = tls;
   if (m_responder)
     return true;
 
@@ -159,7 +190,11 @@ void ServerDiscovery::readQueries()
     const auto datagram = m_responder->receiveDatagram(kMaxMessageSize + 1);
     if (!isQuery(datagram.data()))
       continue;
-    m_responder->writeDatagram(m_announce, datagram.senderAddress(), static_cast<quint16>(datagram.senderPort()));
+    // The MAC of the adapter facing the client lets it wake this computer up later
+    const auto sender = datagram.senderAddress();
+    const QHostAddress peer = sender.toIPv4Address() != 0 ? QHostAddress(sender.toIPv4Address()) : sender;
+    const auto announce = encodeAnnounce(m_name, m_serverPort, m_tls, macFacing(peer));
+    m_responder->writeDatagram(announce, sender, static_cast<quint16>(datagram.senderPort()));
   }
 }
 

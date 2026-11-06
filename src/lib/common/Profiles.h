@@ -104,6 +104,22 @@ public:
    */
   static bool remove(const QString &name);
 
+  /**
+   * @brief Networks (e.g. "192.168.1.0/24") that make a profile active automatically
+   */
+  static QStringList networks(const QString &name);
+
+  /**
+   * @brief Set the networks of a profile. A network belongs to one profile only,
+   * so it is removed from any other profile that had it.
+   */
+  static bool setNetworks(const QString &name, const QStringList &networks);
+
+  /**
+   * @brief The profile linked to one of the given networks, or an empty string
+   */
+  static QString profileForNetworks(const QStringList &currentNetworks);
+
 private:
   static QString canonicalName(const QString &name);
   static bool writeSnapshot(const QString &fileName);

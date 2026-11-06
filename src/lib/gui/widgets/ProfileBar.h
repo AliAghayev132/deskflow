@@ -54,6 +54,8 @@ private:
   void duplicateProfile();
   void renameProfile();
   void deleteProfile();
+  void updateAutoAction();
+  void toggleAuto(bool enabled);
 
   /**
    * @brief Ask the user for a profile name until a valid, unused one is given
@@ -77,4 +79,5 @@ private:
   QAction *m_actionDuplicate = nullptr;
   QAction *m_actionRename = nullptr;
   QAction *m_actionDelete = nullptr;
+  QAction *m_actionAuto = nullptr;
 };

@@ -352,6 +352,47 @@ p, li { white-space: pre-wrap; }
     </message>
 </context>
 <context>
+    <name>ConnectionsPanel</name>
+    <message>
+        <source>just now</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n min</source>
+        <extracomment>Short form of a number of minutes, e.g. &quot;5 min&quot;</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 h %2 min</source>
+        <extracomment>Hours and minutes, e.g. &quot;1 h 5 min&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connected computers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Waiting for your other computers to connect...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Server</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>connecting...</source>
+        <extracomment>%1 is the server name or address</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>not connected</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>FingerprintDialog</name>
     <message>
         <source>Local Fingerprints</source>
@@ -817,6 +858,37 @@ Además, verifique que puede %1 el archivo de configuración del servidor: %2</t
         <extracomment>%1 is a computer name, %2 its address</extracomment>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>&amp;Setup Wizard...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wake up %1</source>
+        <extracomment>%1 is the server&apos;s address</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wake-up signal sent to %1, it may take a minute to start</source>
+        <extracomment>%1 is the server&apos;s address</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not send the wake-up signal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switched to the &quot;%1&quot; profile for this network</source>
+        <extracomment>%1 is the name of a profile</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reconnecting after sleep...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Network changed, reconnecting...</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>NewComputerWidget</name>
@@ -824,6 +896,113 @@ Además, verifique que puede %1 el archivo de configuración del servidor: %2</t
         <source>Unnamed</source>
         <extracomment>Used as the hostname. Translation may not contain spaces</extracomment>
         <translation type="unfinished">Sin-nombre</translation>
+    </message>
+</context>
+<context>
+    <name>OnboardingDialog</name>
+    <message>
+        <source>Set up %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Welcome to %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use one keyboard and mouse across your computers. How will this computer be used?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use this computer&apos;s keyboard and mouse
+(make this computer the server)</source>
+        <translation type="unfinished">Utilizar el teclado y el ratón de esta computadora
+(convertir esta computadora en servidor)</translation>
+    </message>
+    <message>
+        <source>Use another computer’s mouse and keyboard
+(make this computer the client)</source>
+        <translation type="unfinished">Usar el ratón y el teclado de otra computadora
+(convertir esta computadora en cliente)</translation>
+    </message>
+    <message>
+        <source>This computer is the server</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1. Install %1 on your other computers.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>2. On each of them choose &quot;client&quot;. They find this computer on the network by themselves.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3. When they connect, use Configure Server to drag them where they are on your desk.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start sharing now</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Which computer shares its keyboard?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make sure %1 is running as the server on that computer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Or type its name or IP address:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>e.g. 192.168.1.10</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connect now</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Finish</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Looking for servers on your network...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1  (%2)</source>
+        <extracomment>%1 is a computer name, %2 its address</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No servers found yet. Start %1 as the server on the other computer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Found %n server(s).</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -903,6 +1082,19 @@ Además, verifique que puede %1 el archivo de configuración del servidor: %2</t
     </message>
     <message>
         <source>Could not delete the profile &quot;%1&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use &amp;automatically on this network</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not connected to a network</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to &quot;%1&quot; whenever this computer joins %2</source>
+        <extracomment>%1 is a profile name, %2 a list of networks such as 192.168.1.0/24</extracomment>
         <translation type="unfinished"></translation>
     </message>
 </context>

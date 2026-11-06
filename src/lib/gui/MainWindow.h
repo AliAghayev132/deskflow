@@ -27,6 +27,7 @@
 
 class QAction;
 class QMenu;
+class QTimer;
 class QLocalServer;
 
 class DeskflowApplication;
@@ -35,6 +36,7 @@ namespace deskflow::gui {
 class ServerDiscovery;
 struct DiscoveredServer;
 } // namespace deskflow::gui
+class ConnectionsPanel;
 class ProfileBar;
 class StatusBar;
 
@@ -178,6 +180,29 @@ private:
   void findServers(bool automatic = false);
   void serversFound(const QList<deskflow::gui::DiscoveredServer> &servers);
 
+  /**
+   * @brief Remember the MAC of the server the user picked so it can be woken up later
+   */
+  void rememberServer(const deskflow::gui::DiscoveredServer &server);
+  void wakeServer();
+
+  /**
+   * @brief Runs every few seconds: switches profile when the network changes and reconnects a client after
+   * sleep or a network change
+   */
+  void watchSystem();
+
+  /**
+   * @brief Show the setup wizard on first run
+   */
+  void maybeShowOnboarding();
+  void showOnboarding();
+
+  /**
+   * @brief Check the mode buttons to match the stored mode, both unchecked when none was chosen
+   */
+  void loadModeFromSettings();
+
   bool canRunCore() const;
 
   /**
@@ -197,6 +222,8 @@ private:
   void serverClientsChanged(const QStringList &clients);
 
   inline static const auto m_guiSocketName = QStringLiteral("deskflow-gui");
+  static constexpr int kWatchInterval = 5000; ///< ms between network and sleep checks
+  static constexpr int kSleepGap = 30000;     ///< ms a check may be late before we assume the computer slept
   inline static const auto m_nameRegEx = QRegularExpression(QStringLiteral("^[\\w\\-_\\.]{0,255}$"));
 
   VersionChecker m_versionChecker;
@@ -220,6 +247,10 @@ private:
   ProfileBar *m_profileBar = nullptr;
   deskflow::gui::ServerDiscovery *m_discovery = nullptr;
   bool m_automaticDiscovery = false;
+  ConnectionsPanel *m_connectionsPanel = nullptr;
+  qint64 m_lastWatch = 0;
+  QStringList m_lastNetworks;
+  bool m_watchStarted = false;
 
   // Window Menu
   QMenu *m_menuFile = nullptr;
@@ -242,6 +273,8 @@ private:
 
   // Network monitoring
   NetworkMonitor *m_networkMonitor = nullptr;
+  QTimer *m_watchTimer = nullptr;
+  QAction *m_actionSetupWizard = nullptr;
   QString m_currentIpAddress;
 
   // Server IP strategy optimization

@@ -30,6 +30,10 @@ private Q_SLOTS:
   void renameCaseOnly();
   void removeRules();
   void missingActiveFileIsRecreated();
+  void networksRoundTrip();
+  void networksSurviveSaving();
+  void networkBelongsToOneProfile();
+  void profileForNetworks();
 
 private:
   inline static const QString m_settingsPath = QStringLiteral("tmp/profiles-test");

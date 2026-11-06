@@ -26,6 +26,7 @@ struct DiscoveredServer
   QHostAddress address; ///< address the answer came from
   quint16 port = 0;     ///< port the server listens on
   bool tls = false;     ///< whether the server uses TLS
+  QString mac;          ///< hardware address of the server's adapter, for Wake-on-LAN, may be empty
 
   /**
    * @brief Text to put in the "Connect to" box, includes the port when it isn't the default one
@@ -42,12 +43,13 @@ struct DiscoveredServer
  * is discoverable. A client broadcasts a query to every local network and lists
  * the servers that answer.
  *
- * Only the computer name, port and whether TLS is used are shared; connecting
+ * Only the computer name, port, whether TLS is used and the MAC address of the
+ * adapter facing the client (for Wake-on-LAN) are shared; connecting
  * still goes through the usual TLS fingerprint check.
  *
  * Messages are small JSON objects:
  *   query:    {"app":"deskflow","v":1,"type":"query"}
- *   announce: {"app":"deskflow","v":1,"type":"announce","name":"...","port":24800,"tls":true}
+ *   announce: {"app":"deskflow","v":1,"type":"announce","name":"...","port":24800,"tls":true,"mac":"AA:BB:..."}
  */
 class ServerDiscovery : public QObject
 {
@@ -99,7 +101,17 @@ public:
 
   // Message helpers, public for testing
   static QByteArray encodeQuery();
-  static QByteArray encodeAnnounce(const QString &name, quint16 port, bool tls);
+  static QByteArray encodeAnnounce(const QString &name, quint16 port, bool tls, const QString &mac = QString());
+
+  /**
+   * @brief A MAC address as "AA:BB:CC:DD:EE:FF", or an empty string when it isn't a usable one
+   */
+  static QString normalizedMac(const QString &mac);
+
+  /**
+   * @brief MAC of the local adapter on the same network as peer, empty if none
+   */
+  static QString macFacing(const QHostAddress &peer);
   static bool isQuery(const QByteArray &data);
   static std::optional<DiscoveredServer> parseAnnounce(const QByteArray &data, const QHostAddress &from);
 
@@ -119,7 +131,9 @@ private:
   QUdpSocket *m_browser = nullptr;
   QTimer *m_scanTimer = nullptr;
   QTimer *m_resendTimer = nullptr;
-  QByteArray m_announce;
+  QString m_name;
+  quint16 m_serverPort = 0;
+  bool m_tls = false;
   QList<DiscoveredServer> m_servers;
   QList<QHostAddress> m_extraTargets;
 };

@@ -7,6 +7,7 @@
 #include "ProfileBar.h"
 
 #include "common/Profiles.h"
+#include "gui/core/NetworkMonitor.h"
 
 #include <QComboBox>
 #include <QEvent>
@@ -28,7 +29,8 @@ ProfileBar::ProfileBar(QWidget *parent)
       m_actionNew{new QAction(this)},
       m_actionDuplicate{new QAction(this)},
       m_actionRename{new QAction(this)},
-      m_actionDelete{new QAction(this)}
+      m_actionDelete{new QAction(this)},
+      m_actionAuto{new QAction(this)}
 {
   setObjectName(QStringLiteral("profileBar"));
   m_label->setProperty("role", QStringLiteral("caption"));
@@ -40,7 +42,11 @@ ProfileBar::ProfileBar(QWidget *parent)
 
   m_menu->addActions({m_actionNew, m_actionDuplicate, m_actionRename});
   m_menu->addSeparator();
+  m_actionAuto->setCheckable(true);
+  m_menu->addAction(m_actionAuto);
+  m_menu->addSeparator();
   m_menu->addAction(m_actionDelete);
+  m_menu->setToolTipsVisible(true);
 
   m_btnMenu->setObjectName(QStringLiteral("btnProfileMenu"));
   m_btnMenu->setIcon(QIcon::fromTheme(QStringLiteral("configure")));
@@ -60,6 +66,8 @@ ProfileBar::ProfileBar(QWidget *parent)
   connect(m_actionDuplicate, &QAction::triggered, this, &ProfileBar::duplicateProfile);
   connect(m_actionRename, &QAction::triggered, this, &ProfileBar::renameProfile);
   connect(m_actionDelete, &QAction::triggered, this, &ProfileBar::deleteProfile);
+  connect(m_actionAuto, &QAction::triggered, this, &ProfileBar::toggleAuto);
+  connect(m_menu, &QMenu::aboutToShow, this, &ProfileBar::updateAutoAction);
 
   updateText();
   refresh();
@@ -96,6 +104,7 @@ void ProfileBar::updateText()
   m_actionDuplicate->setText(tr("D&uplicate current profile..."));
   m_actionRename->setText(tr("&Rename..."));
   m_actionDelete->setText(tr("&Delete..."));
+  m_actionAuto->setText(tr("Use &automatically on this network"));
 }
 
 void ProfileBar::comboActivated(int index)
@@ -223,5 +232,39 @@ void ProfileBar::deleteProfile()
   }
 
   refresh();
+  Q_EMIT profilesChanged();
+}
+
+void ProfileBar::updateAutoAction()
+{
+  using deskflow::gui::NetworkMonitor;
+  const auto current = NetworkMonitor::localNetworks();
+  const auto linked = Profiles::networks(Profiles::active());
+  const bool onLinkedNetwork =
+      std::ranges::any_of(current, [&linked](const QString &network) { return linked.contains(network); });
+
+  m_actionAuto->setEnabled(!current.isEmpty() && !Profiles::active().isEmpty());
+  m_actionAuto->setChecked(onLinkedNetwork);
+  if (current.isEmpty()) {
+    m_actionAuto->setToolTip(tr("Not connected to a network"));
+  } else {
+    //: %1 is a profile name, %2 a list of networks such as 192.168.1.0/24
+    m_actionAuto->setToolTip(tr("Switch to \"%1\" whenever this computer joins %2")
+                                 .arg(Profiles::active(), current.join(QStringLiteral(", "))));
+  }
+}
+
+void ProfileBar::toggleAuto(bool enabled)
+{
+  using deskflow::gui::NetworkMonitor;
+  const auto active = Profiles::active();
+  const auto current = NetworkMonitor::localNetworks();
+  auto linked = Profiles::networks(active);
+  if (enabled) {
+    linked.append(current);
+  } else {
+    linked.removeIf([&current](const QString &network) { return current.contains(network); });
+  }
+  Profiles::setNetworks(active, linked);
   Q_EMIT profilesChanged();
 }

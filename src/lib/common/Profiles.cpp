@@ -24,6 +24,10 @@ const QStringList kProfilePrefixes = {
 // Single keys outside the prefixes above that also belong to a profile.
 const QStringList kProfileKeys = {Settings::Core::CoreMode, Settings::Core::Port, Settings::Core::Interface};
 
+// Details stored in a profile file that describe the profile, not settings to apply
+const auto kMetaPrefix = QStringLiteral("profile/");
+const auto kNetworksKey = QStringLiteral("profile/networks");
+
 // Keys that match a profile prefix but are per-machine state, never part of a profile.
 const QStringList kExcludedKeys = {
     Settings::Client::XdpClipboardRetried, Settings::Client::XdpRestoreToken, Settings::Server::XdpClipboardRetried,
@@ -120,7 +124,18 @@ bool Profiles::writeSnapshot(const QString &fileName)
   }
 
   QSettings profile(fileName, QSettings::IniFormat);
+
+  // Details about the profile itself (e.g. its networks) are not settings, keep them
+  QMap<QString, QVariant> meta;
+  const auto existingKeys = profile.allKeys();
+  for (const auto &key : existingKeys) {
+    if (key.startsWith(kMetaPrefix))
+      meta.insert(key, profile.value(key));
+  }
+
   profile.clear();
+  for (const auto [key, value] : meta.asKeyValueRange())
+    profile.setValue(key, value);
   const auto values = Settings::values(&Profiles::isProfileKey);
   for (const auto [key, value] : values.asKeyValueRange())
     profile.setValue(key, value);
@@ -264,4 +279,66 @@ bool Profiles::remove(const QString &name)
   if (target.isEmpty() || target == active() || list().size() <= 1)
     return false;
   return QFile::remove(profileFile(target));
+}
+
+QStringList Profiles::networks(const QString &name)
+{
+  const auto target = canonicalName(name);
+  if (target.isEmpty())
+    return {};
+  const QSettings profile(profileFile(target), QSettings::IniFormat);
+  return profile.value(kNetworksKey).toStringList();
+}
+
+bool Profiles::setNetworks(const QString &name, const QStringList &networks)
+{
+  const auto target = canonicalName(name);
+  if (target.isEmpty())
+    return false;
+
+  auto unique = networks;
+  unique.removeDuplicates();
+  unique.removeAll(QString());
+
+  // A network can only switch to one profile, take it away from the others
+  const auto names = list();
+  for (const auto &other : names) {
+    if (other == target)
+      continue;
+    QSettings profile(profileFile(other), QSettings::IniFormat);
+    auto otherNetworks = profile.value(kNetworksKey).toStringList();
+    const auto before = otherNetworks.size();
+    otherNetworks.removeIf([&unique](const QString &network) { return unique.contains(network); });
+    if (otherNetworks.size() == before)
+      continue;
+    if (otherNetworks.isEmpty())
+      profile.remove(kNetworksKey);
+    else
+      profile.setValue(kNetworksKey, otherNetworks);
+    profile.sync();
+  }
+
+  QSettings profile(profileFile(target), QSettings::IniFormat);
+  if (unique.isEmpty())
+    profile.remove(kNetworksKey);
+  else
+    profile.setValue(kNetworksKey, unique);
+  profile.sync();
+  return profile.status() == QSettings::NoError;
+}
+
+QString Profiles::profileForNetworks(const QStringList &currentNetworks)
+{
+  if (currentNetworks.isEmpty())
+    return {};
+
+  const auto names = list();
+  for (const auto &name : names) {
+    const auto profileNetworks = networks(name);
+    for (const auto &network : profileNetworks) {
+      if (currentNetworks.contains(network))
+        return name;
+    }
+  }
+  return {};
 }

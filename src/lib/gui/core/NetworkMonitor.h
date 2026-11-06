@@ -59,6 +59,18 @@ public:
    */
   static bool isVirtualInterface(const QString &interfaceName);
 
+  /**
+   * @brief The IPv4 networks this computer is on, e.g. {"192.168.1.0/24"}, sorted.
+   * Virtual adapters (VMs, containers, VPN tunnels) are left out.
+   */
+  static QStringList localNetworks();
+
+  /**
+   * @brief Network an address belongs to, e.g. 192.168.1.23 with prefix 24 gives "192.168.1.0/24"
+   * @return an empty string for anything but IPv4 or an invalid prefix
+   */
+  static QString networkOf(const QHostAddress &address, int prefixLength);
+
 Q_SIGNALS:
   /**
    * @brief Emitted when IP addresses change

@@ -18,6 +18,7 @@
 #include "dialogs/ClientConfigDialog.h"
 #include "dialogs/FingerprintDialog.h"
 #include "dialogs/HelpDialog.h"
+#include "dialogs/OnboardingDialog.h"
 #include "dialogs/ServerConfigDialog.h"
 #include "dialogs/SettingsDialog.h"
 
@@ -30,9 +31,11 @@
 #include "gui/TlsUtility.h"
 #include "gui/core/CoreProcess.h"
 #include "gui/core/ServerDiscovery.h"
+#include "gui/core/WakeOnLan.h"
 #include "gui/ipc/DaemonIpcClient.h"
 #include "gui/widgets/LogDock.h"
 #include "net/FingerprintDatabase.h"
+#include "widgets/ConnectionsPanel.h"
 #include "widgets/ProfileBar.h"
 #include "widgets/StatusBar.h"
 
@@ -40,6 +43,7 @@
 #include <QCheckBox>
 #include <QCloseEvent>
 #include <QComboBox>
+#include <QDateTime>
 #include <QDesktopServices>
 #include <QFileDialog>
 #include <QLocalServer>
@@ -87,7 +91,9 @@ MainWindow::MainWindow()
       m_actionRestartCore{new QAction(this)},
       m_actionStopCore{new QAction(this)},
       m_actionShowHelp{new QAction(this)},
-      m_networkMonitor{new NetworkMonitor(this)}
+      m_networkMonitor{new NetworkMonitor(this)},
+      m_watchTimer{new QTimer(this)},
+      m_actionSetupWizard{new QAction(this)}
 {
   ui->setupUi(this);
 
@@ -248,6 +254,10 @@ void MainWindow::setupControls()
 
   m_discovery = new ServerDiscovery(this);
 
+  m_connectionsPanel = new ConnectionsPanel(this);
+  if (auto layout = qobject_cast<QBoxLayout *>(ui->topLevelWidget->layout()))
+    layout->insertWidget(layout->indexOf(ui->horizontalWidget), m_connectionsPanel);
+
   updateModeIcons();
 }
 
@@ -339,6 +349,11 @@ void MainWindow::connectSlots()
 
   connect(ui->btnFindServers, &QPushButton::clicked, this, [this] { findServers(); });
   connect(m_discovery, &ServerDiscovery::scanFinished, this, &MainWindow::serversFound);
+
+  connect(m_actionSetupWizard, &QAction::triggered, this, &MainWindow::showOnboarding);
+  connect(m_watchTimer, &QTimer::timeout, this, &MainWindow::watchSystem);
+  m_watchTimer->start(kWatchInterval);
+  QTimer::singleShot(0, this, &MainWindow::watchSystem);
 }
 
 void MainWindow::toggleLogVisible(bool visible)
@@ -704,6 +719,8 @@ void MainWindow::open()
   if (Settings::value(Settings::Gui::AutoStartCore).toBool()) {
     startCore();
   }
+
+  maybeShowOnboarding();
 }
 
 void MainWindow::createMenuBar()
@@ -720,6 +737,7 @@ void MainWindow::createMenuBar()
 
   m_menuHelp->addAction(m_actionAbout);
   m_menuHelp->addAction(m_actionShowHelp);
+  m_menuHelp->addAction(m_actionSetupWizard);
 
   auto menuBar = new QMenuBar(this);
   menuBar->addMenu(m_menuFile);
@@ -1006,6 +1024,15 @@ void MainWindow::coreProcessStateChanged(ProcessState state)
   using enum ProcessState;
   updateStatus();
   updateDiscovery();
+
+  if (state == Stopped || state == Stopping) {
+    m_connectionsPanel->clear();
+  } else if (state == Started) {
+    if (m_coreProcess.mode() == CoreMode::Server)
+      m_connectionsPanel->showServer({});
+    else if (m_coreProcess.mode() == CoreMode::Client)
+      m_connectionsPanel->showClient(ConnectionState::Connecting, ui->cbHostname->currentText());
+  }
   if (state == Started) {
     qDebug() << "recording that core has started";
     Settings::setValue(Settings::Gui::AutoStartCore, true);
@@ -1047,6 +1074,9 @@ void MainWindow::coreConnectionStateChanged(ConnectionState state)
   qDebug() << "core connection state changed:" << static_cast<int>(state);
 
   updateStatus();
+
+  if (m_coreProcess.mode() == CoreMode::Client && m_coreProcess.isStarted())
+    m_connectionsPanel->showClient(state, ui->cbHostname->currentText());
 
   // always assume connection is not secure when connection changes
   // to anything except connected. the only way the padlock shows is
@@ -1146,6 +1176,7 @@ void MainWindow::updateText()
   m_actionAbout->setText(tr("About %1...").arg(kAppName));
 
   m_actionShowHelp->setText(tr("View &Help"));
+  m_actionSetupWizard->setText(tr("&Setup Wizard..."));
 
   //: start / restart core shortcut
   m_actionStartCore->setShortcut(QKeySequence(tr("Ctrl+S")));
@@ -1288,6 +1319,7 @@ void MainWindow::serverClientsChanged(const QStringList &clients)
   if (m_coreProcess.mode() != CoreMode::Server || !m_coreProcess.isStarted())
     return;
   m_statusBar->setServerClients(clients);
+  m_connectionsPanel->showServer(clients);
 }
 
 void MainWindow::daemonIpcClientConnectionFailed()
@@ -1431,18 +1463,7 @@ void MainWindow::switchProfile(const QString &name)
   m_serverConfig.reload();
   m_serverConfig.updateServerName();
 
-  // Show the mode stored in the new profile, both buttons are unchecked when no mode was chosen yet
-  {
-    const auto mode = Settings::value(Settings::Core::CoreMode).value<Settings::CoreMode>();
-    const QSignalBlocker serverBlocker(ui->rbModeServer);
-    const QSignalBlocker clientBlocker(ui->rbModeClient);
-    ui->rbModeServer->setAutoExclusive(false);
-    ui->rbModeClient->setAutoExclusive(false);
-    ui->rbModeServer->setChecked(mode == Settings::CoreMode::Server);
-    ui->rbModeClient->setChecked(mode == Settings::CoreMode::Client);
-    ui->rbModeServer->setAutoExclusive(true);
-    ui->rbModeClient->setAutoExclusive(true);
-  }
+  loadModeFromSettings();
 
   m_serverStartIPs.clear();
   m_serverStartSuggestedIP.clear();
@@ -1533,6 +1554,7 @@ void MainWindow::serversFound(const QList<DiscoveredServer> &servers)
     // Only fill in the address when the choice is obvious and the user hasn't typed anything meanwhile
     if (servers.size() == 1 && m_coreProcess.mode() == CoreMode::Client && ui->cbHostname->currentText().isEmpty()) {
       ui->cbHostname->setCurrentText(servers.first().host(defaultPort));
+      rememberServer(servers.first());
       //: %1 is the name of the server computer
       m_statusBar->showMessage(tr("Found the server \"%1\" on your network").arg(servers.first().name), 8000);
     }
@@ -1540,6 +1562,15 @@ void MainWindow::serversFound(const QList<DiscoveredServer> &servers)
   }
 
   QMenu menu(this);
+
+  // A server that doesn't answer may be asleep, offer to wake the one we know
+  const auto wakeHost = Settings::value(Settings::Client::WakeHost).toString();
+  const auto wakeMac = Settings::value(Settings::Client::WakeMac).toString();
+  const bool canWake = !wakeMac.isEmpty() && !wakeHost.isEmpty() &&
+                       std::ranges::none_of(servers, [&wakeHost, defaultPort](const DiscoveredServer &server) {
+                         return server.host(defaultPort) == wakeHost;
+                       });
+
   if (servers.isEmpty()) {
     menu.addAction(tr("No servers found"))->setEnabled(false);
     menu.addAction(tr("Make sure the server is running and can be found on the network"))->setEnabled(false);
@@ -1550,8 +1581,132 @@ void MainWindow::serversFound(const QList<DiscoveredServer> &servers)
       auto action = menu.addAction(tr("%1  (%2)").arg(server.name, host));
       const auto icon = server.tls ? QStringLiteral("security-high") : QStringLiteral("network-connect");
       action->setIcon(QIcon::fromTheme(icon));
-      connect(action, &QAction::triggered, this, [this, host] { ui->cbHostname->setCurrentText(host); });
+      connect(action, &QAction::triggered, this, [this, host, server] {
+        ui->cbHostname->setCurrentText(host);
+        rememberServer(server);
+      });
     }
   }
+
+  if (canWake) {
+    menu.addSeparator();
+    //: %1 is the server's address
+    auto wake = menu.addAction(tr("Wake up %1").arg(wakeHost));
+    wake->setIcon(QIcon::fromTheme(QStringLiteral("system-run")));
+    connect(wake, &QAction::triggered, this, &MainWindow::wakeServer);
+  }
+
   menu.exec(ui->btnFindServers->mapToGlobal(QPoint(0, ui->btnFindServers->height())));
+}
+
+void MainWindow::loadModeFromSettings()
+{
+  const auto mode = Settings::value(Settings::Core::CoreMode).value<Settings::CoreMode>();
+  const QSignalBlocker serverBlocker(ui->rbModeServer);
+  const QSignalBlocker clientBlocker(ui->rbModeClient);
+  ui->rbModeServer->setAutoExclusive(false);
+  ui->rbModeClient->setAutoExclusive(false);
+  ui->rbModeServer->setChecked(mode == Settings::CoreMode::Server);
+  ui->rbModeClient->setChecked(mode == Settings::CoreMode::Client);
+  ui->rbModeServer->setAutoExclusive(true);
+  ui->rbModeClient->setAutoExclusive(true);
+}
+
+void MainWindow::rememberServer(const DiscoveredServer &server)
+{
+  if (server.mac.isEmpty())
+    return;
+  const auto defaultPort = static_cast<quint16>(Settings::value(Settings::Core::Port).toInt());
+  Settings::setValue(Settings::Client::WakeHost, server.host(defaultPort));
+  Settings::setValue(Settings::Client::WakeMac, server.mac);
+}
+
+void MainWindow::wakeServer()
+{
+  const auto host = Settings::value(Settings::Client::WakeHost).toString();
+  if (WakeOnLan::wake(Settings::value(Settings::Client::WakeMac).toString())) {
+    //: %1 is the server's address
+    m_statusBar->showMessage(tr("Wake-up signal sent to %1, it may take a minute to start").arg(host), 10000);
+  } else {
+    m_statusBar->showMessage(tr("Could not send the wake-up signal"), 8000);
+  }
+}
+
+void MainWindow::watchSystem()
+{
+  const auto now = QDateTime::currentMSecsSinceEpoch();
+  // The timer doesn't run while the computer sleeps, a long gap between two checks means it woke up
+  const bool resumed = m_lastWatch != 0 && now - m_lastWatch > kWatchInterval + kSleepGap;
+  m_lastWatch = now;
+
+  const auto networks = NetworkMonitor::localNetworks();
+  const bool firstCheck = !m_watchStarted;
+  const bool networkChanged = !firstCheck && networks != m_lastNetworks;
+  m_watchStarted = true;
+  m_lastNetworks = networks;
+
+  // Use the profile linked to the network we just joined, or started on
+  if (firstCheck || networkChanged) {
+    if (const auto profile = Profiles::profileForNetworks(networks);
+        !profile.isEmpty() && profile != Profiles::active()) {
+      switchProfile(profile);
+      //: %1 is the name of a profile
+      m_statusBar->showMessage(tr("Switched to the \"%1\" profile for this network").arg(Profiles::active()), 8000);
+      return;
+    }
+  }
+
+  // A client keeps a dead connection after sleep or a network change, start it again
+  if ((resumed || networkChanged) && !networks.isEmpty() && m_coreProcess.mode() == CoreMode::Client &&
+      m_coreProcess.isStarted()) {
+    qInfo().noquote() << (resumed ? "computer woke up" : "network changed") << "reconnecting to the server";
+    m_statusBar->showMessage(
+        resumed ? tr("Reconnecting after sleep...") : tr("Network changed, reconnecting..."), 8000
+    );
+    m_coreProcess.restart();
+  }
+
+  m_connectionsPanel->refresh();
+}
+
+void MainWindow::maybeShowOnboarding()
+{
+  if (Settings::value(Settings::Gui::OnboardingDone).toBool())
+    return;
+
+  // People who already set Deskflow up don't need the wizard
+  if (Settings::value(Settings::Core::CoreMode).value<Settings::CoreMode>() != Settings::CoreMode::None) {
+    Settings::setValue(Settings::Gui::OnboardingDone, true);
+    return;
+  }
+
+  QTimer::singleShot(0, this, &MainWindow::showOnboarding);
+}
+
+void MainWindow::showOnboarding()
+{
+  OnboardingDialog dialog(this);
+  const bool accepted = dialog.exec() == QDialog::Accepted;
+  Settings::setValue(Settings::Gui::OnboardingDone, true);
+  if (!accepted || dialog.mode() == Settings::CoreMode::None)
+    return;
+
+  if (m_coreProcess.isStarted())
+    stopCore();
+
+  Settings::setValue(Settings::Core::CoreMode, dialog.mode());
+  if (dialog.mode() == Settings::CoreMode::Client) {
+    Settings::setValue(Settings::Client::RemoteHost, dialog.serverHost());
+    if (const auto mac = dialog.serverMac(); !mac.isEmpty()) {
+      Settings::setValue(Settings::Client::WakeHost, dialog.serverHost());
+      Settings::setValue(Settings::Client::WakeMac, mac);
+    }
+  }
+  Settings::save();
+
+  loadModeFromSettings();
+  applyConfig();
+
+  if (dialog.startNow())
+    startCore();
 }

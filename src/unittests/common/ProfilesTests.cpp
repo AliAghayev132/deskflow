@@ -241,4 +241,51 @@ void ProfilesTests::missingActiveFileIsRecreated()
   QCOMPARE(home.value(Settings::Client::RemoteHost).toString(), kHomeHost);
 }
 
+void ProfilesTests::networksRoundTrip()
+{
+  QVERIFY(Profiles::networks("Home").isEmpty());
+  QVERIFY(Profiles::setNetworks("Home", {"192.168.1.0/24", "192.168.1.0/24", ""}));
+  QCOMPARE(Profiles::networks("home"), QStringList{"192.168.1.0/24"});
+  QVERIFY(!Profiles::setNetworks("Missing", {"10.0.0.0/8"}));
+
+  // Networks are details of the profile, never applied as settings
+  QVERIFY(Profiles::switchTo("Home"));
+  QVERIFY(!Settings::values([](const QString &key) { return key.startsWith("profile/"); }).contains("profile/networks")
+  );
+}
+
+void ProfilesTests::networksSurviveSaving()
+{
+  Settings::setValue(Settings::Client::RemoteHost, kHomeHost);
+  QVERIFY(Profiles::saveActive());
+  QCOMPARE(Profiles::networks("Home"), QStringList{"192.168.1.0/24"});
+
+  QVERIFY(Profiles::rename("Home", "House"));
+  QCOMPARE(Profiles::networks("House"), QStringList{"192.168.1.0/24"});
+  QVERIFY(Profiles::rename("House", "Home"));
+}
+
+void ProfilesTests::networkBelongsToOneProfile()
+{
+  QVERIFY(Profiles::create("Office", true));
+  QVERIFY(Profiles::setNetworks("Office", {"10.0.0.0/24", "192.168.1.0/24"}));
+  QCOMPARE(Profiles::networks("Office"), (QStringList{"10.0.0.0/24", "192.168.1.0/24"}));
+  QVERIFY(Profiles::networks("Home").isEmpty());
+
+  QVERIFY(Profiles::setNetworks("Home", {"192.168.1.0/24"}));
+  QCOMPARE(Profiles::networks("Office"), QStringList{"10.0.0.0/24"});
+
+  QVERIFY(Profiles::setNetworks("Office", {}));
+  QVERIFY(Profiles::networks("Office").isEmpty());
+  QVERIFY(Profiles::setNetworks("Office", {"10.0.0.0/24"}));
+}
+
+void ProfilesTests::profileForNetworks()
+{
+  QCOMPARE(Profiles::profileForNetworks({}), QString());
+  QCOMPARE(Profiles::profileForNetworks({"172.16.0.0/16"}), QString());
+  QCOMPARE(Profiles::profileForNetworks({"172.16.0.0/16", "10.0.0.0/24"}), QStringLiteral("Office"));
+  QCOMPARE(Profiles::profileForNetworks({"192.168.1.0/24"}), QStringLiteral("Home"));
+}
+
 QTEST_MAIN(ProfilesTests)

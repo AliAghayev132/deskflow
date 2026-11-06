@@ -7,3 +7,10 @@ create_test(
   SOURCE ProfileBarTests.cpp
   WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/gui"
 )
+
+create_test(
+  NAME ConnectionsPanelTests
+  DEPENDS gui
+  SOURCE ConnectionsPanelTests.cpp
+  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/gui"
+)

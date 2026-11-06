@@ -149,4 +149,37 @@ void NetworkMonitor::updateNetworkState()
   setIpAddresses(validAddresses());
 }
 
+QString NetworkMonitor::networkOf(const QHostAddress &address, int prefixLength)
+{
+  if (address.protocol() != QAbstractSocket::IPv4Protocol || prefixLength <= 0 || prefixLength > 32)
+    return {};
+  const quint32 mask = prefixLength == 32 ? 0xFFFFFFFFu : ~(0xFFFFFFFFu >> prefixLength);
+  const QHostAddress network(address.toIPv4Address() & mask);
+  return QStringLiteral("%1/%2").arg(network.toString()).arg(prefixLength);
+}
+
+QStringList NetworkMonitor::localNetworks()
+{
+  QStringList networks;
+  const auto allInterfaces = QNetworkInterface::allInterfaces();
+  for (const auto &interface : allInterfaces) {
+    const auto flags = interface.flags();
+    if (!flags.testFlag(QNetworkInterface::IsUp) || !flags.testFlag(QNetworkInterface::IsRunning) ||
+        flags.testFlag(QNetworkInterface::IsLoopBack) || flags.testFlag(QNetworkInterface::IsPointToPoint) ||
+        interface.type() == QNetworkInterface::Virtual || isVirtualInterface(interface.humanReadableName()))
+      continue;
+
+    const auto entries = interface.addressEntries();
+    for (const auto &entry : entries) {
+      if (entry.ip().isLinkLocal())
+        continue;
+      if (const auto network = networkOf(entry.ip(), entry.prefixLength());
+          !network.isEmpty() && !networks.contains(network))
+        networks.append(network);
+    }
+  }
+  networks.sort();
+  return networks;
+}
+
 } // namespace deskflow::gui

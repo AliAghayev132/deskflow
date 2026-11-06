@@ -46,6 +46,8 @@ public:
     inline static const auto LanguageSync = QStringLiteral("client/languageSync");
     inline static const auto RemoteHost = QStringLiteral("client/remoteHost");
     inline static const auto RecentRemoteHosts = QStringLiteral("client/recentRemoteHosts");
+    inline static const auto WakeHost = QStringLiteral("client/wakeHost");
+    inline static const auto WakeMac = QStringLiteral("client/wakeMac");
     inline static const auto XdpClipboardRetried = QStringLiteral("client/xdpClipboardRetried");
     inline static const auto XdpRestoreToken = QStringLiteral("client/xdpRestoreToken");
   };
@@ -89,6 +91,7 @@ public:
     inline static const auto ShowVersionInTitle = QStringLiteral("gui/showVersionInTitle");
     inline static const auto IgnoreMissingKeyboardLayouts = QStringLiteral("gui/ignoreMissingKeyboardLayouts");
     inline static const auto ActiveProfile = QStringLiteral("gui/activeProfile");
+    inline static const auto OnboardingDone = QStringLiteral("gui/onboardingDone");
   };
   struct Log
   {
@@ -299,6 +302,8 @@ private:
     , Client::LanguageSync
     , Client::RemoteHost
     , Client::RecentRemoteHosts
+    , Client::WakeHost
+    , Client::WakeMac
     , Client::YScrollScale
     , Client::XScrollScale
     , Core::CoreMode
@@ -336,6 +341,7 @@ private:
     , Gui::ShowVersionInTitle
     , Gui::IgnoreMissingKeyboardLayouts
     , Gui::ActiveProfile
+    , Gui::OnboardingDone
     , Security::Certificate
     , Security::CheckPeers
     , Security::KeySize
@@ -368,6 +374,7 @@ private:
     , Gui::ShownServerFirstStartMessage
     , Gui::ShowVersionInTitle
     , Gui::IgnoreMissingKeyboardLayouts
+    , Gui::OnboardingDone
     , Core::PreventSleep
     , Core::EnableEnterCommand
     , Core::EnableExitCommand

@@ -5,6 +5,7 @@
  */
 
 #include "gui/core/ServerDiscovery.h"
+#include "gui/core/WakeOnLan.h"
 
 #include <QTest>
 
@@ -21,6 +22,10 @@ private Q_SLOTS:
   void noAnswerWhenNotResponding();
   void stopRespondingStopsAnswers();
   void respondingTwiceUpdatesDetails();
+  void macRoundTrip();
+  void normalizesMac();
+  void magicPacket();
+  void wakeSendsPacket();
 
 private:
   // A port of our own so tests don't clash with a running Deskflow
