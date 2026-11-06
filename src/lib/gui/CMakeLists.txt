@@ -45,6 +45,8 @@ add_library(${target} STATIC
   core/CoreProcess.cpp
   core/CoreProcess.h
   core/NetworkMonitor.cpp
+  core/ServerDiscovery.cpp
+  core/ServerDiscovery.h
   core/NetworkMonitor.h
   dialogs/AboutDialog.cpp
   dialogs/AboutDialog.h

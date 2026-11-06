@@ -81,6 +81,7 @@ void ServerConfigDialog::save()
   }
   Settings::setValue(Settings::Server::Protocol, networkProtocolToOption(m_protocol));
   Settings::setValue(Settings::Server::EnableClipboard, m_enableClipboard);
+  Settings::setValue(Settings::Server::Discoverable, m_discoverable);
   Settings::setValue(Settings::Server::ClipboardSize, m_clipboardSize);
   Settings::setValue(Settings::Server::EnableHeartbeat, m_enableHeartbeat);
   Settings::setValue(Settings::Server::Heartbeat, m_heartbeatRate);
@@ -232,6 +233,14 @@ void ServerConfigDialog::removeAction()
 
   hotkey.removeActionAt(actionRow);
   delete ui->listActions->currentItem();
+  setButtonBoxEnabledButtons();
+}
+
+void ServerConfigDialog::toggleDiscoverable(bool enabled)
+{
+  if (m_discoverable == enabled)
+    return;
+  m_discoverable = enabled;
   setButtonBoxEnabledButtons();
 }
 
@@ -401,6 +410,7 @@ void ServerConfigDialog::loadFromConfig()
   m_defaultLockToComputerState = Settings::value(Settings::Server::DefaultLockToComputerState).toBool();
   m_disableLockToComputer = Settings::value(Settings::Server::DisableLockToComputer).toBool();
   m_enableClipboard = Settings::value(Settings::Server::EnableClipboard).toBool();
+  m_discoverable = Settings::value(Settings::Server::Discoverable).toBool();
   m_clipboardSize = Settings::value(Settings::Server::ClipboardSize).toUInt();
 
   ui->lineConfigFile->setText(serverConfig().configFile());
@@ -461,6 +471,7 @@ void ServerConfigDialog::refreshControls()
   ui->cbDefaultLockToComputerState->setChecked(m_defaultLockToComputerState);
   ui->cbDisableLockToComputer->setChecked(m_disableLockToComputer);
   ui->cbEnableClipboard->setChecked(m_enableClipboard);
+  ui->cbDiscoverable->setChecked(m_discoverable);
   ui->sbClipboardSizeLimit->setEnabled(m_enableClipboard);
   ui->sbClipboardSizeLimit->setValue(m_clipboardSize);
 }
@@ -504,6 +515,7 @@ void ServerConfigDialog::initConnections() const
 
   connect(ui->cbRelativeMouseMoves, &QCheckBox::toggled, this, &ServerConfigDialog::toggleRelativeMouseMoves);
   connect(ui->cbEnableClipboard, &QCheckBox::toggled, this, &ServerConfigDialog::toggleClipboard);
+  connect(ui->cbDiscoverable, &QCheckBox::toggled, this, &ServerConfigDialog::toggleDiscoverable);
   connect(ui->btnBrowseConfigFile, &QPushButton::clicked, this, &ServerConfigDialog::browseConfigFile);
   connect(ui->groupExternalConfig, &QGroupBox::toggled, this, &ServerConfigDialog::toggleExternalConfig);
   connect(ui->lineConfigFile, &QLineEdit::textChanged, this, &ServerConfigDialog::setServerConfig);
@@ -529,6 +541,7 @@ void ServerConfigDialog::updateControls() const
   ui->cbDefaultLockToComputerState->setEnabled(writable);
   ui->cbDisableLockToComputer->setEnabled(writable);
   ui->cbEnableClipboard->setEnabled(writable);
+  ui->cbDiscoverable->setEnabled(writable);
   ui->sbClipboardSizeLimit->setEnabled(writable);
   ui->rbProtocolBarrier->setEnabled(writable);
   ui->rbProtocolSynergy->setEnabled(writable);
@@ -557,6 +570,7 @@ void ServerConfigDialog::restoreFromDefaults()
   m_defaultLockToComputerState = Settings::defaultValue(Settings::Server::DefaultLockToComputerState).toBool();
   m_disableLockToComputer = Settings::defaultValue(Settings::Server::DisableLockToComputer).toBool();
   m_enableClipboard = Settings::defaultValue(Settings::Server::EnableClipboard).toBool();
+  m_discoverable = Settings::defaultValue(Settings::Server::Discoverable).toBool();
   m_clipboardSize = Settings::defaultValue(Settings::Server::ClipboardSize).toUInt();
 
   ui->groupExternalConfig->setChecked(Settings::defaultValue(Settings::Server::ExternalConfig).toBool());
@@ -598,6 +612,7 @@ bool ServerConfigDialog::isGeneralConfigModified() const
          m_originalServerConfigUsesExternalFile != Settings::value(Settings::Server::ExternalConfigFile).toString() ||
          m_protocol != Settings::networkProtocol() ||
          m_enableClipboard != Settings::value(Settings::Server::EnableClipboard).toBool() ||
+         m_discoverable != Settings::value(Settings::Server::Discoverable).toBool() ||
          m_clipboardSize != Settings::value(Settings::Server::ClipboardSize).toUInt() ||
          m_enableHeartbeat != Settings::value(Settings::Server::EnableHeartbeat).toBool() ||
          m_heartbeatRate != Settings::value(Settings::Server::Heartbeat).toInt() ||
@@ -617,6 +632,7 @@ bool ServerConfigDialog::isGeneralConfigDefault() const
          ui->lineConfigFile->text() == Settings::defaultValue(Settings::Server::ExternalConfigFile).toString() &&
          m_protocol == networkProtocolFromString(Settings::defaultValue(Settings::Server::Protocol).toString()) &&
          m_enableClipboard == Settings::defaultValue(Settings::Server::EnableClipboard).toBool() &&
+         m_discoverable == Settings::defaultValue(Settings::Server::Discoverable).toBool() &&
          m_clipboardSize == Settings::defaultValue(Settings::Server::ClipboardSize).toUInt() &&
          m_enableHeartbeat == Settings::defaultValue(Settings::Server::EnableHeartbeat).toBool() &&
          m_heartbeatRate == Settings::defaultValue(Settings::Server::Heartbeat).toInt() &&

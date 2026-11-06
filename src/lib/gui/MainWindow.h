@@ -31,6 +31,10 @@ class QLocalServer;
 
 class DeskflowApplication;
 class LogDock;
+namespace deskflow::gui {
+class ServerDiscovery;
+struct DiscoveredServer;
+} // namespace deskflow::gui
 class ProfileBar;
 class StatusBar;
 
@@ -162,6 +166,18 @@ private:
    */
   void updateModeIcons();
 
+  /**
+   * @brief Answer discovery queries while this computer runs as a discoverable server
+   */
+  void updateDiscovery();
+
+  /**
+   * @brief Look for servers on the network
+   * @param automatic true when started by the app rather than the Find button, the result is applied silently
+   */
+  void findServers(bool automatic = false);
+  void serversFound(const QList<deskflow::gui::DiscoveredServer> &servers);
+
   bool canRunCore() const;
 
   /**
@@ -202,6 +218,8 @@ private:
   LogDock *m_logDock;
   StatusBar *m_statusBar = nullptr;
   ProfileBar *m_profileBar = nullptr;
+  deskflow::gui::ServerDiscovery *m_discovery = nullptr;
+  bool m_automaticDiscovery = false;
 
   // Window Menu
   QMenu *m_menuFile = nullptr;

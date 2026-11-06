@@ -29,6 +29,7 @@
 #include "gui/Messages.h"
 #include "gui/TlsUtility.h"
 #include "gui/core/CoreProcess.h"
+#include "gui/core/ServerDiscovery.h"
 #include "gui/ipc/DaemonIpcClient.h"
 #include "gui/widgets/LogDock.h"
 #include "net/FingerprintDatabase.h"
@@ -245,6 +246,8 @@ void MainWindow::setupControls()
   m_profileBar = new ProfileBar(this);
   ui->profileContainer->layout()->addWidget(m_profileBar);
 
+  m_discovery = new ServerDiscovery(this);
+
   updateModeIcons();
 }
 
@@ -333,6 +336,9 @@ void MainWindow::connectSlots()
 
   connect(m_profileBar, &ProfileBar::switchRequested, this, &MainWindow::switchProfile);
   connect(m_profileBar, &ProfileBar::profilesChanged, this, &MainWindow::refreshProfiles);
+
+  connect(ui->btnFindServers, &QPushButton::clicked, this, [this] { findServers(); });
+  connect(m_discovery, &ServerDiscovery::scanFinished, this, &MainWindow::serversFound);
 }
 
 void MainWindow::toggleLogVisible(bool visible)
@@ -368,6 +374,10 @@ void MainWindow::toggleLogVisible(bool visible)
 
 void MainWindow::settingsChanged(const QString &key)
 {
+  if (key == Settings::Core::ComputerName || key == Settings::Core::Port || key == Settings::Server::Discoverable ||
+      key == Settings::Security::TlsEnabled)
+    updateDiscovery();
+
   if (key == Settings::Log::Level) {
     m_coreProcess.applyLogLevel();
     return;
@@ -553,6 +563,11 @@ void MainWindow::coreModeToggled(bool checked)
   Settings::save();
 
   updateModeControls();
+  updateDiscovery();
+
+  // Save typing the server address when there is one to find
+  if (mode == Settings::CoreMode::Client && ui->cbHostname->currentText().isEmpty())
+    findServers(true);
 }
 
 void MainWindow::updateModeControls()
@@ -990,6 +1005,7 @@ void MainWindow::coreProcessStateChanged(ProcessState state)
 {
   using enum ProcessState;
   updateStatus();
+  updateDiscovery();
   if (state == Started) {
     qDebug() << "recording that core has started";
     Settings::setValue(Settings::Gui::AutoStartCore, true);
@@ -1472,4 +1488,70 @@ void MainWindow::refreshProfiles()
     connect(action, &QAction::triggered, this, [this, name] { switchProfile(name); }, Qt::QueuedConnection);
   }
   m_menuProfiles->setEnabled(!profiles.isEmpty());
+}
+
+void MainWindow::updateDiscovery()
+{
+  if (!m_discovery)
+    return;
+
+  const bool respond = m_coreProcess.mode() == CoreMode::Server && m_coreProcess.isStarted() &&
+                       Settings::value(Settings::Server::Discoverable).toBool();
+  if (!respond) {
+    m_discovery->stopResponding();
+    return;
+  }
+
+  m_discovery->startResponding(
+      Settings::value(Settings::Core::ComputerName).toString(),
+      static_cast<quint16>(Settings::value(Settings::Core::Port).toInt()), TlsUtility::isEnabled()
+  );
+}
+
+void MainWindow::findServers(bool automatic)
+{
+  if (m_discovery->isScanning())
+    return;
+
+  m_automaticDiscovery = automatic;
+  if (!automatic) {
+    ui->btnFindServers->setEnabled(false);
+    ui->btnFindServers->setText(tr("Searching..."));
+  }
+  m_discovery->scan();
+}
+
+void MainWindow::serversFound(const QList<DiscoveredServer> &servers)
+{
+  ui->btnFindServers->setEnabled(true);
+  ui->btnFindServers->setText(tr("&Find"));
+
+  const auto defaultPort = static_cast<quint16>(Settings::value(Settings::Core::Port).toInt());
+
+  if (m_automaticDiscovery) {
+    m_automaticDiscovery = false;
+    // Only fill in the address when the choice is obvious and the user hasn't typed anything meanwhile
+    if (servers.size() == 1 && m_coreProcess.mode() == CoreMode::Client && ui->cbHostname->currentText().isEmpty()) {
+      ui->cbHostname->setCurrentText(servers.first().host(defaultPort));
+      //: %1 is the name of the server computer
+      m_statusBar->showMessage(tr("Found the server \"%1\" on your network").arg(servers.first().name), 8000);
+    }
+    return;
+  }
+
+  QMenu menu(this);
+  if (servers.isEmpty()) {
+    menu.addAction(tr("No servers found"))->setEnabled(false);
+    menu.addAction(tr("Make sure the server is running and can be found on the network"))->setEnabled(false);
+  } else {
+    for (const auto &server : servers) {
+      const auto host = server.host(defaultPort);
+      //: %1 is a computer name, %2 its address
+      auto action = menu.addAction(tr("%1  (%2)").arg(server.name, host));
+      const auto icon = server.tls ? QStringLiteral("security-high") : QStringLiteral("network-connect");
+      action->setIcon(QIcon::fromTheme(icon));
+      connect(action, &QAction::triggered, this, [this, host] { ui->cbHostname->setCurrentText(host); });
+    }
+  }
+  menu.exec(ui->btnFindServers->mapToGlobal(QPoint(0, ui->btnFindServers->height())));
 }

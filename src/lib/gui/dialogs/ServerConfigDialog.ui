@@ -648,6 +648,16 @@
            <number>6</number>
           </property>
           <item>
+           <widget class="QCheckBox" name="cbDiscoverable">
+            <property name="toolTip">
+             <string>Clients can find this computer with the Find button instead of typing its address. Only the computer name and port are shared.</string>
+            </property>
+            <property name="text">
+             <string>Let computers on this network &amp;find this server</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QWidget" name="widgetHeartbeat" native="true">
             <layout class="QHBoxLayout" name="groupHeartbeat">
              <property name="spacing">

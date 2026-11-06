@@ -503,6 +503,19 @@
               </widget>
              </item>
              <item>
+              <widget class="QPushButton" name="btnFindServers">
+               <property name="toolTip">
+                <string>Find servers on this network</string>
+               </property>
+               <property name="text">
+                <string>&amp;Find</string>
+               </property>
+               <property name="icon">
+                <iconset theme="system-search"/>
+               </property>
+              </widget>
+             </item>
+             <item>
               <widget class="QPushButton" name="btnConfigureClient">
                <property name="text">
                 <string>&amp;Configure Client</string>

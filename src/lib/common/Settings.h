@@ -107,6 +107,7 @@ public:
   struct Server
   {
     inline static const auto ClipboardSize = QStringLiteral("server/clipboardSize");
+    inline static const auto Discoverable = QStringLiteral("server/discoverable");
     inline static const auto DefaultLockToComputerState = QStringLiteral("server/defaultLockToComputerState");
     inline static const auto DisableLockToComputer = QStringLiteral("server/disableLockToComputer");
     inline static const auto EnableClipboard = QStringLiteral("server/enableClipboard");
@@ -342,6 +343,7 @@ private:
     , Server::ClipboardSize
     , Server::DefaultLockToComputerState
     , Server::DisableLockToComputer
+    , Server::Discoverable
     , Server::EnableClipboard
     , Server::EnableHeartbeat
     , Server::EnableSwitchDelay
@@ -396,6 +398,7 @@ private:
     , Security::TlsEnabled
     , Security::CheckPeers
     , Server::EnableClipboard
+    , Server::Discoverable
     , Server::Win32KeepForeground
   };
 
