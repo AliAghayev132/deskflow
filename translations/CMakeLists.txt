@@ -55,6 +55,11 @@ else()
   foreach(LANG ${${CMAKE_PROJECT_NAME}_TRS})
     string(REPLACE "${CMAKE_PROJECT_NAME}_" "" LANG ${LANG})
     string(REPLACE ".ts" "" LANG ${LANG})
+    # Qt doesn't ship every language (e.g. Azerbaijani), those use English for Qt's own texts
+    if(NOT EXISTS "${MAC_QT_LANG_PATH}/qtbase_${LANG}.qm")
+      message(STATUS "Qt has no translation for ${LANG}, skipping qtbase_${LANG}.qm")
+      continue()
+    endif()
     add_custom_command(
       TARGET app_translations POST_BUILD
       COMMAND ${CMAKE_COMMAND} -E copy_if_different "${MAC_QT_LANG_PATH}/qtbase_${LANG}.qm" "${BUNDLE_TR_DIR}/qt_${LANG}.qm"

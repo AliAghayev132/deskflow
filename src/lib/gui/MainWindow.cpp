@@ -1906,12 +1906,14 @@ void MainWindow::fileOffered(int id, const FileOffer &offer)
     box->setIcon(QMessageBox::Warning);
     const auto code = pairingCode(offer.fingerprint);
     details += QStringLiteral("\n\n");
-    details += code.isEmpty()
-                   ? tr("The sending computer could not be identified. Only accept if you expected these files.")
-                   //: %1 is a pairing code like "482 913 077 251"
-                   : tr("This is not a computer you have accepted before. Its pairing code is %1, only accept if "
-                        "the sending computer shows the same code.")
-                         .arg(code);
+    if (code.isEmpty()) {
+      details += tr("The sending computer could not be identified. Only accept if you expected these files.");
+    } else {
+      //: %1 is a pairing code like "482 913 077 251"
+      details += tr("This is not a computer you have accepted before. Its pairing code is %1, only accept if "
+                    "the sending computer shows the same code.")
+                     .arg(code);
+    }
   }
   box->setInformativeText(details);
 

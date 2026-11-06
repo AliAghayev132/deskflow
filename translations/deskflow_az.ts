@@ -1079,6 +1079,7 @@ Bağlanmış IP artıq keçərsizdir, serveri yenidən başlatmaq lazım ola bil
     </message>
     <message>
         <source>This is not a computer you have accepted before. Its pairing code is %1, only accept if the sending computer shows the same code.</source>
+        <extracomment>%1 is a pairing code like &quot;482 913 077 251&quot;</extracomment>
         <translation>Bu, əvvəl qəbul etdiyiniz kompüter deyil. Onun qoşulma kodu %1-dir, yalnız göndərən kompüter eyni kodu göstərirsə qəbul edin.</translation>
     </message>
     <message>

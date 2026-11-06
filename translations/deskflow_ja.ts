@@ -1071,6 +1071,7 @@ Additionally, check you are able to %1 the server config file: %2</source>
     </message>
     <message>
         <source>This is not a computer you have accepted before. Its pairing code is %1, only accept if the sending computer shows the same code.</source>
+        <extracomment>%1 is a pairing code like &quot;482 913 077 251&quot;</extracomment>
         <translation type="unfinished"></translation>
     </message>
     <message>
