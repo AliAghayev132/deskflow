@@ -914,6 +914,44 @@ Bağlanmış IP artıq keçərsizdir, serveri yenidən başlatmaq lazım ola bil
         <source>Other computers show this code the first time they connect. Only accept them if the codes match.</source>
         <translation>Digər kompüterlər ilk dəfə qoşulanda bu kodu göstərir. Yalnız kodlar eyni olduqda qəbul edin.</translation>
     </message>
+    <message>
+        <source>&amp;Clipboard history</source>
+        <translation>&amp;Mübadilə buferi tarixçəsi</translation>
+    </message>
+    <message>
+        <source>History is turned off</source>
+        <translation>Tarixçə söndürülüb</translation>
+    </message>
+    <message>
+        <source>Nothing copied yet</source>
+        <translation>Hələ heç nə kopyalanmayıb</translation>
+    </message>
+    <message>
+        <source>Copied at %1</source>
+        <extracomment>%1 is the time it was copied</extracomment>
+        <translation>Kopyalanıb: %1</translation>
+    </message>
+    <message>
+        <source>Copied at %1
+
+%2</source>
+        <extracomment>%1 is the time it was copied, %2 the start of the copied text</extracomment>
+        <translation>Kopyalanıb: %1
+
+%2</translation>
+    </message>
+    <message>
+        <source>&amp;Remember copied items</source>
+        <translation>Kopyalananları &amp;yadda saxla</translation>
+    </message>
+    <message>
+        <source>Copied items are kept in memory only and are forgotten when %1 quits. Passwords that password managers mark as secret are never remembered.</source>
+        <translation>Kopyalananlar yalnız yaddaşda saxlanılır və %1 bağlananda unudulur. Parol menecerlərinin gizli kimi işarələdiyi parollar heç vaxt yadda saxlanılmır.</translation>
+    </message>
+    <message>
+        <source>C&amp;lear history</source>
+        <translation>Tarixçəni &amp;təmizlə</translation>
+    </message>
 </context>
 <context>
     <name>NewComputerWidget</name>
@@ -1783,6 +1821,14 @@ Bu ayarı aktiv etmək server konfiqurasiyası interfeysini söndürəcək.</tra
     <message>
         <source>Encryption Disabled</source>
         <translation>Şifrələmə söndürülüb</translation>
+    </message>
+</context>
+<context>
+    <name>deskflow::gui::ClipboardHistory</name>
+    <message>
+        <source>Image %1 × %2</source>
+        <extracomment>%1 and %2 are the width and height in pixels</extracomment>
+        <translation>Şəkil %1 × %2</translation>
     </message>
 </context>
 <context>

@@ -21,3 +21,10 @@ create_test(
   SOURCE PairingCodeTests.cpp
   WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/gui"
 )
+
+create_test(
+  NAME ClipboardHistoryTests
+  DEPENDS gui
+  SOURCE ClipboardHistoryTests.cpp
+  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/gui"
+)

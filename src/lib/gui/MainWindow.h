@@ -33,6 +33,7 @@ class QLocalServer;
 class DeskflowApplication;
 class LogDock;
 namespace deskflow::gui {
+class ClipboardHistory;
 class ServerDiscovery;
 struct DiscoveredServer;
 } // namespace deskflow::gui
@@ -164,6 +165,11 @@ private:
   void refreshProfiles();
 
   /**
+   * @brief Fill the clipboard history menu, called each time it opens
+   */
+  void refreshClipboardMenu();
+
+  /**
    * @brief Draw the mode card icons in the colors of the current theme
    */
   void updateModeIcons();
@@ -275,6 +281,8 @@ private:
   NetworkMonitor *m_networkMonitor = nullptr;
   QTimer *m_watchTimer = nullptr;
   QAction *m_actionSetupWizard = nullptr;
+  deskflow::gui::ClipboardHistory *m_clipboardHistory = nullptr;
+  QMenu *m_menuClipboard = nullptr;
   QString m_currentIpAddress;
 
   // Server IP strategy optimization

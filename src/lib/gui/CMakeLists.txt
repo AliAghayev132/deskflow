@@ -42,6 +42,8 @@ add_library(${target} STATIC
   config/ComputerList.h
   config/ServerConfig.cpp
   config/ServerConfig.h
+  core/ClipboardHistory.cpp
+  core/ClipboardHistory.h
   core/CoreProcess.cpp
   core/CoreProcess.h
   core/NetworkMonitor.cpp

@@ -92,6 +92,7 @@ public:
     inline static const auto IgnoreMissingKeyboardLayouts = QStringLiteral("gui/ignoreMissingKeyboardLayouts");
     inline static const auto ActiveProfile = QStringLiteral("gui/activeProfile");
     inline static const auto OnboardingDone = QStringLiteral("gui/onboardingDone");
+    inline static const auto ClipboardHistory = QStringLiteral("gui/clipboardHistory");
   };
   struct Log
   {
@@ -342,6 +343,7 @@ private:
     , Gui::IgnoreMissingKeyboardLayouts
     , Gui::ActiveProfile
     , Gui::OnboardingDone
+    , Gui::ClipboardHistory
     , Security::Certificate
     , Security::CheckPeers
     , Security::KeySize
@@ -402,6 +404,7 @@ private:
     , Gui::CloseReminder
     , Gui::LogExpanded
     , Gui::SymbolicTrayIcon
+    , Gui::ClipboardHistory
     , Security::TlsEnabled
     , Security::CheckPeers
     , Server::EnableClipboard

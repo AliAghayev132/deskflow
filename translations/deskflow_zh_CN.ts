@@ -911,6 +911,42 @@ Additionally, check you are able to %1 the server config file: %2</source>
         <source>Other computers show this code the first time they connect. Only accept them if the codes match.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>&amp;Clipboard history</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>History is turned off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing copied yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copied at %1</source>
+        <extracomment>%1 is the time it was copied</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copied at %1
+
+%2</source>
+        <extracomment>%1 is the time it was copied, %2 the start of the copied text</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Remember copied items</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copied items are kept in memory only and are forgotten when %1 quits. Passwords that password managers mark as secret are never remembered.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>C&amp;lear history</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>NewComputerWidget</name>
@@ -1778,6 +1814,14 @@ Enabling this setting will disable the server config GUI.</source>
     <message>
         <source>Encryption Disabled</source>
         <translation>加密已禁用</translation>
+    </message>
+</context>
+<context>
+    <name>deskflow::gui::ClipboardHistory</name>
+    <message>
+        <source>Image %1 × %2</source>
+        <extracomment>%1 and %2 are the width and height in pixels</extracomment>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

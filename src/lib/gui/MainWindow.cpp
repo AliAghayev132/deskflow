@@ -29,6 +29,7 @@
 #include "common/VersionInfo.h"
 #include "gui/Messages.h"
 #include "gui/TlsUtility.h"
+#include "gui/core/ClipboardHistory.h"
 #include "gui/core/CoreProcess.h"
 #include "gui/core/PairingCode.h"
 #include "gui/core/ServerDiscovery.h"
@@ -47,13 +48,16 @@
 #include <QDateTime>
 #include <QDesktopServices>
 #include <QFileDialog>
+#include <QGuiApplication>
 #include <QLocalServer>
 #include <QLocalSocket>
+#include <QLocale>
 #include <QMenu>
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QNetworkAccessManager>
 #include <QNetworkInterface>
+#include <QPixmap>
 #include <QPushButton>
 #include <QRegularExpression>
 #include <QRegularExpressionValidator>
@@ -94,7 +98,9 @@ MainWindow::MainWindow()
       m_actionShowHelp{new QAction(this)},
       m_networkMonitor{new NetworkMonitor(this)},
       m_watchTimer{new QTimer(this)},
-      m_actionSetupWizard{new QAction(this)}
+      m_actionSetupWizard{new QAction(this)},
+      m_clipboardHistory{new ClipboardHistory(QGuiApplication::clipboard(), this)},
+      m_menuClipboard{new QMenu(this)}
 {
   ui->setupUi(this);
 
@@ -144,6 +150,12 @@ MainWindow::MainWindow()
   m_guiDupeChecker->listen(m_guiSocketName);
 
   Profiles::ensureInitialized();
+
+  m_clipboardHistory->setEnabled(Settings::value(Settings::Gui::ClipboardHistory).toBool());
+  m_menuClipboard->setToolTipsVisible(true);
+  connect(m_menuClipboard, &QMenu::aboutToShow, this, &MainWindow::refreshClipboardMenu);
+  // macOS builds the tray menu natively, so it needs items before it is first opened
+  refreshClipboardMenu();
 
   createMenuBar();
   setupControls();
@@ -733,6 +745,8 @@ void MainWindow::createMenuBar()
   m_menuFile->addAction(m_actionQuit);
 
   m_menuEdit->addAction(m_actionSettings);
+  m_menuEdit->addSeparator();
+  m_menuEdit->addMenu(m_menuClipboard);
 
   m_menuView->addAction(m_logDock->toggleViewAction());
 
@@ -757,6 +771,7 @@ void MainWindow::setupTrayIcon()
   );
   trayMenu->insertSeparator(m_actionMinimize);
   trayMenu->insertMenu(m_actionMinimize, m_menuProfiles);
+  trayMenu->insertMenu(m_actionMinimize, m_menuClipboard);
   trayMenu->insertSeparator(m_actionMinimize);
   trayMenu->insertSeparator(m_actionTrayQuit);
   m_trayIcon->setContextMenu(trayMenu);
@@ -1173,6 +1188,7 @@ void MainWindow::updateText()
   m_menuView->setTitle(tr("&View"));
   m_menuHelp->setTitle(tr("&Help"));
   m_menuProfiles->setTitle(tr("&Profiles"));
+  m_menuClipboard->setTitle(tr("&Clipboard history"));
 
   m_actionMinimize->setText(tr("&Minimize to tray"));
   m_actionQuit->setText(tr("&Quit"));
@@ -1491,6 +1507,51 @@ void MainWindow::switchProfile(const QString &name)
     else
       m_coreProcess.restart();
   }
+}
+
+void MainWindow::refreshClipboardMenu()
+{
+  // Actions are rebuilt when the menu opens, never while one of them is being triggered
+  m_menuClipboard->clear();
+
+  const auto &entries = m_clipboardHistory->entries();
+  if (!m_clipboardHistory->isEnabled()) {
+    m_menuClipboard->addAction(tr("History is turned off"))->setEnabled(false);
+  } else if (entries.isEmpty()) {
+    m_menuClipboard->addAction(tr("Nothing copied yet"))->setEnabled(false);
+  }
+
+  const auto locale = QLocale();
+  for (int i = 0; i < entries.size(); ++i) {
+    const auto &entry = entries.at(i);
+    auto action = m_menuClipboard->addAction(ClipboardHistory::summary(entry));
+    const auto time = locale.toString(entry.time.time(), QLocale::ShortFormat);
+    if (entry.isImage()) {
+      action->setIcon(QPixmap::fromImage(entry.image.scaled(32, 32, Qt::KeepAspectRatio, Qt::SmoothTransformation)));
+      //: %1 is the time it was copied
+      action->setToolTip(tr("Copied at %1").arg(time));
+    } else {
+      //: %1 is the time it was copied, %2 the start of the copied text
+      action->setToolTip(tr("Copied at %1\n\n%2").arg(time, entry.text.left(300)));
+    }
+    connect(action, &QAction::triggered, this, [this, i] { m_clipboardHistory->restore(i); });
+  }
+
+  m_menuClipboard->addSeparator();
+  auto keep = m_menuClipboard->addAction(tr("&Remember copied items"));
+  keep->setCheckable(true);
+  keep->setChecked(m_clipboardHistory->isEnabled());
+  keep->setToolTip(tr("Copied items are kept in memory only and are forgotten when %1 quits. "
+                      "Passwords that password managers mark as secret are never remembered.")
+                       .arg(kAppName));
+  connect(keep, &QAction::toggled, this, [this](bool on) {
+    m_clipboardHistory->setEnabled(on);
+    Settings::setValue(Settings::Gui::ClipboardHistory, on);
+  });
+
+  auto clear = m_menuClipboard->addAction(tr("C&lear history"));
+  clear->setEnabled(!entries.isEmpty());
+  connect(clear, &QAction::triggered, m_clipboardHistory, &ClipboardHistory::clear);
 }
 
 void MainWindow::refreshProfiles()

@@ -913,6 +913,44 @@ Bağlı bir IP artık geçersiz, sunucuyu yeniden başlatmanız gerekebilir.</tr
         <source>Other computers show this code the first time they connect. Only accept them if the codes match.</source>
         <translation>Diğer bilgisayarlar ilk kez bağlandıklarında bu kodu gösterir. Yalnızca kodlar eşleşiyorsa kabul edin.</translation>
     </message>
+    <message>
+        <source>&amp;Clipboard history</source>
+        <translation>&amp;Pano geçmişi</translation>
+    </message>
+    <message>
+        <source>History is turned off</source>
+        <translation>Geçmiş kapalı</translation>
+    </message>
+    <message>
+        <source>Nothing copied yet</source>
+        <translation>Henüz hiçbir şey kopyalanmadı</translation>
+    </message>
+    <message>
+        <source>Copied at %1</source>
+        <extracomment>%1 is the time it was copied</extracomment>
+        <translation>Kopyalandı: %1</translation>
+    </message>
+    <message>
+        <source>Copied at %1
+
+%2</source>
+        <extracomment>%1 is the time it was copied, %2 the start of the copied text</extracomment>
+        <translation>Kopyalandı: %1
+
+%2</translation>
+    </message>
+    <message>
+        <source>&amp;Remember copied items</source>
+        <translation>Kopyalananları &amp;hatırla</translation>
+    </message>
+    <message>
+        <source>Copied items are kept in memory only and are forgotten when %1 quits. Passwords that password managers mark as secret are never remembered.</source>
+        <translation>Kopyalananlar yalnızca bellekte tutulur ve %1 kapandığında unutulur. Parola yöneticilerinin gizli olarak işaretlediği parolalar asla hatırlanmaz.</translation>
+    </message>
+    <message>
+        <source>C&amp;lear history</source>
+        <translation>Geçmişi &amp;temizle</translation>
+    </message>
 </context>
 <context>
     <name>NewComputerWidget</name>
@@ -1780,6 +1818,14 @@ Bu ayarı etkinleştirmek sunucu yapılandırma arayüzünü devre dışı bıra
     <message>
         <source>Encryption Disabled</source>
         <translation>Şifreleme Devre Dışı</translation>
+    </message>
+</context>
+<context>
+    <name>deskflow::gui::ClipboardHistory</name>
+    <message>
+        <source>Image %1 × %2</source>
+        <extracomment>%1 and %2 are the width and height in pixels</extracomment>
+        <translation>Görsel %1 × %2</translation>
     </message>
 </context>
 <context>
