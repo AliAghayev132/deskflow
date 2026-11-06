@@ -337,6 +337,21 @@ p, li { white-space: pre-wrap; }
     </message>
 </context>
 <context>
+    <name>ComputerTileDelegate</name>
+    <message>
+        <source>Server</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New computer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drop to remove</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>FingerprintDialog</name>
     <message>
         <source>Local Fingerprints</source>
@@ -747,6 +762,61 @@ Additionally, check you are able to %1 the server config file: %2</source>
         <source>&lt;p&gt;Keyboard layout support requires matching layouts on all computers. The following layouts from the other computer are not installed on this computer:&lt;/p&gt;&lt;p&gt;&lt;b&gt;%1&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Please install them to enable support for these layouts.&lt;/p&gt;</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>How do you want to use this computer?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Arrange your computers and choose the server options.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find servers on this network</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Find</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Profiles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not load the profile &quot;%1&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Profile &quot;%1&quot; is now active</source>
+        <extracomment>%1 is the name of a profile</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Searching...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Found the server &quot;%1&quot; on your network</source>
+        <extracomment>%1 is the name of the server computer</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No servers found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make sure the server is running and can be found on the network</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1  (%2)</source>
+        <extracomment>%1 is a computer name, %2 its address</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>NewComputerWidget</name>
@@ -754,6 +824,86 @@ Additionally, check you are able to %1 the server config file: %2</source>
         <source>Unnamed</source>
         <extracomment>Used as the hostname. Translation may not contain spaces</extracomment>
         <translation type="unfinished">Без_имени</translation>
+    </message>
+</context>
+<context>
+    <name>ProfileBar</name>
+    <message>
+        <source>&amp;Profile:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each profile keeps its own mode, server address and computer layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Manage profiles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;New profile...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>D&amp;uplicate current profile...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Rename...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Delete...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Profile name:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use up to %1 letters, digits, spaces, &apos;-&apos;, &apos;_&apos; or &apos;.&apos;. The name must start and end with a letter or digit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A profile named &quot;%1&quot; already exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not create the profile &quot;%1&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate profile</source>
+        <extracomment>%1 is the name of the profile being copied</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not rename the profile to &quot;%1&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete the profile &quot;%1&quot;? Its server address and computer layout will be lost.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not delete the profile &quot;%1&quot;.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1097,6 +1247,14 @@ Enabling this setting will disable the server config GUI.</source>
     <message>
         <source>Enable lock to computer at startup</source>
         <translation>Включать привязку к компьютеру при запуске</translation>
+    </message>
+    <message>
+        <source>Clients can find this computer with the Find button instead of typing its address. Only the computer name and port are shared.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Let computers on this network &amp;find this server</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

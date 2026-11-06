@@ -28,7 +28,8 @@ void ProfilesTests::validNames()
 {
   QVERIFY(Profiles::isValidName("Home"));
   QVERIFY(Profiles::isValidName("Ofis 2"));
-  QVERIFY(Profiles::isValidName("Çayxana-Şəki_1.0"));
+  // Written as UTF-16 escapes so the test doesn't depend on the compiler's source encoding
+  QVERIFY(Profiles::isValidName(QString(u"\u00C7ayxana-\u015E\u0259ki_1.0")));
   QVERIFY(Profiles::isValidName("A"));
 
   QVERIFY(!Profiles::isValidName(""));
