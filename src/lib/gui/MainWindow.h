@@ -28,12 +28,17 @@
 class QAction;
 class QMenu;
 class QTimer;
+class QDragEnterEvent;
+class QDropEvent;
 class QLocalServer;
 
 class DeskflowApplication;
 class LogDock;
 namespace deskflow::gui {
 class ClipboardHistory;
+class FileReceiver;
+class FileSender;
+struct FileOffer;
 class ServerDiscovery;
 struct DiscoveredServer;
 struct LinkPeer;
@@ -85,6 +90,8 @@ public:
 
 protected:
   void changeEvent(QEvent *e) override;
+  void dragEnterEvent(QDragEnterEvent *event) override;
+  void dropEvent(QDropEvent *event) override;
   bool eventFilter(QObject *obj, QEvent *event) override;
 
 private:
@@ -210,6 +217,25 @@ private:
   void updateLink();
 
   /**
+   * @brief Accept file offers while the core runs with TLS
+   */
+  void updateFileReceiver();
+
+  /**
+   * @brief Connected computers files can be sent to, by name
+   */
+  QList<QPair<QString, QHostAddress>> fileTargets() const;
+
+  /**
+   * @brief Send files to a connected computer, asks for the files and the computer when needed
+   */
+  void sendFiles(QStringList paths = {});
+  bool isTrustedComputer(const QByteArray &fingerprint) const;
+  void fileOffered(int id, const deskflow::gui::FileOffer &offer);
+  void filesReceived(int id, bool ok, const QString &error, const QStringList &files);
+  void notify(const QString &title, const QString &text, const QString &folder = {});
+
+  /**
    * @brief Runs every few seconds: switches profile when the network changes and reconnects a client after
    * sleep or a network change
    */
@@ -301,6 +327,10 @@ private:
   deskflow::gui::ClipboardHistory *m_clipboardHistory = nullptr;
   QMenu *m_menuClipboard = nullptr;
   QMenu *m_menuWake = nullptr;
+  deskflow::gui::FileReceiver *m_fileReceiver = nullptr;
+  QAction *m_actionSendFiles = nullptr;
+  QHash<int, QString> m_offerSenders;
+  QString m_notifiedFolder;
   QString m_currentIpAddress;
 
   // Server IP strategy optimization

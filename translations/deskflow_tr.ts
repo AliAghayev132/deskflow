@@ -982,6 +982,129 @@ Bağlı bir IP artık geçersiz, sunucuyu yeniden başlatmanız gerekebilir.</tr
         <source>&amp;Forget these computers</source>
         <translation>Bu bilgisayarları &amp;unut</translation>
     </message>
+    <message>
+        <source>Receiving files from %1: %2 of %3</source>
+        <extracomment>%1 is a computer name, %2 and %3 are sizes like &quot;3.1 MB&quot;</extracomment>
+        <translation>%1 bilgisayarından dosyalar alınıyor: %2 / %3</translation>
+    </message>
+    <message>
+        <source>Send &amp;files...</source>
+        <translation>&amp;Dosya gönder...</translation>
+    </message>
+    <message>
+        <source>Send files to a connected computer, or drop them on this window</source>
+        <translation>Bağlı bir bilgisayara dosya gönderin veya dosyaları bu pencereye bırakın</translation>
+    </message>
+    <message>
+        <source>Send files</source>
+        <translation>Dosya gönder</translation>
+    </message>
+    <message>
+        <source>Turn on TLS encryption in Preferences to send files.</source>
+        <translation>Dosya göndermek için Tercihler&apos;de TLS şifrelemesini etkinleştirin.</translation>
+    </message>
+    <message>
+        <source>Connect to another computer first. Files can be sent to computers that are connected and run this version of %1.</source>
+        <extracomment>%1 is the app name</extracomment>
+        <translation>Önce başka bir bilgisayara bağlanın. Dosyalar, bağlı olan ve %1 programının bu sürümünü çalıştıran bilgisayarlara gönderilebilir.</translation>
+    </message>
+    <message>
+        <source>Send to:</source>
+        <translation>Gönderilecek yer:</translation>
+    </message>
+    <message>
+        <source>Choose files to send to %1</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation>%1 bilgisayarına gönderilecek dosyaları seçin</translation>
+    </message>
+    <message>
+        <source>Waiting for %1 to accept the files...</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation>%1 bilgisayarının dosyaları kabul etmesi bekleniyor...</translation>
+    </message>
+    <message>
+        <source>Sending files to %1: %2 of %3</source>
+        <extracomment>%1 is a computer name, %2 and %3 are sizes like &quot;3.1 MB&quot;</extracomment>
+        <translation>%1 bilgisayarına dosyalar gönderiliyor: %2 / %3</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n file(s) sent to %1</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation>
+            <numerusform>%n dosya %1 bilgisayarına gönderildi</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Files sent</source>
+        <translation>Dosyalar gönderildi</translation>
+    </message>
+    <message>
+        <source>Could not send files to %1: %2</source>
+        <extracomment>%1 is a computer name, %2 the reason</extracomment>
+        <translation>%1 bilgisayarına dosya gönderilemedi: %2</translation>
+    </message>
+    <message>
+        <source>Files not sent</source>
+        <translation>Dosyalar gönderilmedi</translation>
+    </message>
+    <message>
+        <source>Connecting to %1...</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation>%1 ile bağlantı kuruluyor...</translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more</source>
+        <translation>
+            <numerusform>ve %n tane daha</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Receive files</source>
+        <translation>Dosyaları al</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 wants to send you %n file(s), %2 in total.</source>
+        <extracomment>%1 is a computer name, %2 a size like &quot;3.1 MB&quot;</extracomment>
+        <translation>
+            <numerusform>%1 size %n dosya göndermek istiyor, toplam %2.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The sending computer could not be identified. Only accept if you expected these files.</source>
+        <translation>Gönderen bilgisayar tanımlanamadı. Yalnızca bu dosyaları bekliyorsanız kabul edin.</translation>
+    </message>
+    <message>
+        <source>This is not a computer you have accepted before. Its pairing code is %1, only accept if the sending computer shows the same code.</source>
+        <translation>Bu, daha önce kabul ettiğiniz bir bilgisayar değil. Eşleştirme kodu %1, yalnızca gönderen bilgisayar aynı kodu gösteriyorsa kabul edin.</translation>
+    </message>
+    <message>
+        <source>Save to Downloads</source>
+        <translation>İndirilenlere kaydet</translation>
+    </message>
+    <message>
+        <source>Decline</source>
+        <translation>Reddet</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n file(s) from %1 saved in %2</source>
+        <extracomment>%1 is a computer name, %2 a folder</extracomment>
+        <translation>
+            <numerusform>%1 bilgisayarından %n dosya %2 klasörüne kaydedildi</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Files received</source>
+        <translation>Dosyalar alındı</translation>
+    </message>
+    <message>
+        <source>Receiving files from %1 failed: %2</source>
+        <extracomment>%1 is a computer name, %2 the reason</extracomment>
+        <translation>%1 bilgisayarından dosya alınamadı: %2</translation>
+    </message>
+    <message>
+        <source>Files not received</source>
+        <translation>Dosyalar alınmadı</translation>
+    </message>
 </context>
 <context>
     <name>NewComputerWidget</name>
@@ -1857,6 +1980,102 @@ Bu ayarı etkinleştirmek sunucu yapılandırma arayüzünü devre dışı bıra
         <source>Image %1 × %2</source>
         <extracomment>%1 and %2 are the width and height in pixels</extracomment>
         <translation>Görsel %1 × %2</translation>
+    </message>
+</context>
+<context>
+    <name>deskflow::gui::FileReceiver</name>
+    <message>
+        <source>Receiving files was stopped</source>
+        <translation>Dosya alımı durduruldu</translation>
+    </message>
+    <message>
+        <source>The files were not accepted in time</source>
+        <translation>Dosyalar zamanında kabul edilmedi</translation>
+    </message>
+    <message>
+        <source>The other computer stopped responding</source>
+        <translation>Diğer bilgisayar yanıt vermiyor</translation>
+    </message>
+    <message>
+        <source>The other computer closed the connection</source>
+        <translation>Diğer bilgisayar bağlantıyı kapattı</translation>
+    </message>
+    <message>
+        <source>The other computer sent data before it was accepted</source>
+        <translation>Diğer bilgisayar kabul edilmeden önce veri gönderdi</translation>
+    </message>
+    <message>
+        <source>Could not create the folder %1</source>
+        <extracomment>%1 is a folder</extracomment>
+        <translation>%1 klasörü oluşturulamadı</translation>
+    </message>
+    <message>
+        <source>There is not enough free space for these files</source>
+        <translation>Bu dosyalar için yeterli boş alan yok</translation>
+    </message>
+    <message>
+        <source>Could not save %1</source>
+        <extracomment>%1 is a file name</extracomment>
+        <translation>%1 kaydedilemedi</translation>
+    </message>
+</context>
+<context>
+    <name>deskflow::gui::FileSender</name>
+    <message>
+        <source>The other computer stopped responding</source>
+        <translation>Diğer bilgisayar yanıt vermiyor</translation>
+    </message>
+    <message>
+        <source>Nobody answered on the other computer</source>
+        <translation>Diğer bilgisayarda kimse yanıt vermedi</translation>
+    </message>
+    <message>
+        <source>Could not reach the other computer</source>
+        <translation>Diğer bilgisayara ulaşılamadı</translation>
+    </message>
+    <message>
+        <source>No files were chosen</source>
+        <translation>Hiçbir dosya seçilmedi</translation>
+    </message>
+    <message>
+        <source>Up to %1 files can be sent at once</source>
+        <extracomment>%1 is the most files that can be sent at once</extracomment>
+        <translation>Tek seferde en fazla %1 dosya gönderilebilir</translation>
+    </message>
+    <message>
+        <source>%1 is a folder, only files can be sent</source>
+        <extracomment>%1 is a folder name</extracomment>
+        <translation>%1 bir klasör, yalnızca dosya gönderilebilir</translation>
+    </message>
+    <message>
+        <source>%1 can&apos;t be read</source>
+        <extracomment>%1 is a file name</extracomment>
+        <translation>%1 okunamıyor</translation>
+    </message>
+    <message>
+        <source>Sending was cancelled</source>
+        <translation>Gönderme iptal edildi</translation>
+    </message>
+    <message>
+        <source>The other computer could not be verified, connect to it with %1 first</source>
+        <translation>Diğer bilgisayar doğrulanamadı, önce ona %1 ile bağlanın</translation>
+    </message>
+    <message>
+        <source>The other computer sent an answer that could not be read</source>
+        <translation>Diğer bilgisayarın yanıtı okunamadı</translation>
+    </message>
+    <message>
+        <source>The other computer declined the files</source>
+        <translation>Diğer bilgisayar dosyaları reddetti</translation>
+    </message>
+    <message>
+        <source>The transfer ended early</source>
+        <translation>Aktarım erken bitti</translation>
+    </message>
+    <message>
+        <source>%1 changed while it was being sent</source>
+        <extracomment>%1 is a file name</extracomment>
+        <translation>%1 gönderilirken değişti</translation>
     </message>
 </context>
 <context>

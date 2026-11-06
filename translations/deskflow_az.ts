@@ -983,6 +983,133 @@ Bağlanmış IP artıq keçərsizdir, serveri yenidən başlatmaq lazım ola bil
         <source>&amp;Forget these computers</source>
         <translation>Bu kompüterləri &amp;unut</translation>
     </message>
+    <message>
+        <source>Receiving files from %1: %2 of %3</source>
+        <extracomment>%1 is a computer name, %2 and %3 are sizes like &quot;3.1 MB&quot;</extracomment>
+        <translation>%1 kompüterindən fayllar alınır: %2 / %3</translation>
+    </message>
+    <message>
+        <source>Send &amp;files...</source>
+        <translation>&amp;Fayl göndər...</translation>
+    </message>
+    <message>
+        <source>Send files to a connected computer, or drop them on this window</source>
+        <translation>Qoşulmuş kompüterə fayl göndərin və ya faylları bu pəncərəyə atın</translation>
+    </message>
+    <message>
+        <source>Send files</source>
+        <translation>Fayl göndər</translation>
+    </message>
+    <message>
+        <source>Turn on TLS encryption in Preferences to send files.</source>
+        <translation>Fayl göndərmək üçün Ayarlarda TLS şifrələməsini aktiv edin.</translation>
+    </message>
+    <message>
+        <source>Connect to another computer first. Files can be sent to computers that are connected and run this version of %1.</source>
+        <extracomment>%1 is the app name</extracomment>
+        <translation>Əvvəlcə başqa kompüterə qoşulun. Fayllar qoşulmuş və %1-un bu versiyasını işlədən kompüterlərə göndərilə bilər.</translation>
+    </message>
+    <message>
+        <source>Send to:</source>
+        <translation>Kimə göndərilsin:</translation>
+    </message>
+    <message>
+        <source>Choose files to send to %1</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation>%1 kompüterinə göndəriləcək faylları seçin</translation>
+    </message>
+    <message>
+        <source>Waiting for %1 to accept the files...</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation>%1 faylları qəbul etməsi gözlənilir...</translation>
+    </message>
+    <message>
+        <source>Sending files to %1: %2 of %3</source>
+        <extracomment>%1 is a computer name, %2 and %3 are sizes like &quot;3.1 MB&quot;</extracomment>
+        <translation>%1 kompüterinə fayllar göndərilir: %2 / %3</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n file(s) sent to %1</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation>
+            <numerusform>%n fayl %1 kompüterinə göndərildi</numerusform>
+            <numerusform>%n fayl %1 kompüterinə göndərildi</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Files sent</source>
+        <translation>Fayllar göndərildi</translation>
+    </message>
+    <message>
+        <source>Could not send files to %1: %2</source>
+        <extracomment>%1 is a computer name, %2 the reason</extracomment>
+        <translation>%1 kompüterinə fayl göndərmək mümkün olmadı: %2</translation>
+    </message>
+    <message>
+        <source>Files not sent</source>
+        <translation>Fayllar göndərilmədi</translation>
+    </message>
+    <message>
+        <source>Connecting to %1...</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation>%1 ilə əlaqə qurulur...</translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more</source>
+        <translation>
+            <numerusform>və daha %n</numerusform>
+            <numerusform>və daha %n</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Receive files</source>
+        <translation>Faylları qəbul et</translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 wants to send you %n file(s), %2 in total.</source>
+        <extracomment>%1 is a computer name, %2 a size like &quot;3.1 MB&quot;</extracomment>
+        <translation>
+            <numerusform>%1 sizə %n fayl göndərmək istəyir, cəmi %2.</numerusform>
+            <numerusform>%1 sizə %n fayl göndərmək istəyir, cəmi %2.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The sending computer could not be identified. Only accept if you expected these files.</source>
+        <translation>Göndərən kompüteri müəyyən etmək mümkün olmadı. Yalnız bu faylları gözləyirdinizsə qəbul edin.</translation>
+    </message>
+    <message>
+        <source>This is not a computer you have accepted before. Its pairing code is %1, only accept if the sending computer shows the same code.</source>
+        <translation>Bu, əvvəl qəbul etdiyiniz kompüter deyil. Onun qoşulma kodu %1-dir, yalnız göndərən kompüter eyni kodu göstərirsə qəbul edin.</translation>
+    </message>
+    <message>
+        <source>Save to Downloads</source>
+        <translation>Endirmələrə saxla</translation>
+    </message>
+    <message>
+        <source>Decline</source>
+        <translation>İmtina et</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n file(s) from %1 saved in %2</source>
+        <extracomment>%1 is a computer name, %2 a folder</extracomment>
+        <translation>
+            <numerusform>%1 kompüterindən %n fayl %2 qovluğunda saxlandı</numerusform>
+            <numerusform>%1 kompüterindən %n fayl %2 qovluğunda saxlandı</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Files received</source>
+        <translation>Fayllar alındı</translation>
+    </message>
+    <message>
+        <source>Receiving files from %1 failed: %2</source>
+        <extracomment>%1 is a computer name, %2 the reason</extracomment>
+        <translation>%1 kompüterindən fayl almaq alınmadı: %2</translation>
+    </message>
+    <message>
+        <source>Files not received</source>
+        <translation>Fayllar alınmadı</translation>
+    </message>
 </context>
 <context>
     <name>NewComputerWidget</name>
@@ -1860,6 +1987,102 @@ Bu ayarı aktiv etmək server konfiqurasiyası interfeysini söndürəcək.</tra
         <source>Image %1 × %2</source>
         <extracomment>%1 and %2 are the width and height in pixels</extracomment>
         <translation>Şəkil %1 × %2</translation>
+    </message>
+</context>
+<context>
+    <name>deskflow::gui::FileReceiver</name>
+    <message>
+        <source>Receiving files was stopped</source>
+        <translation>Fayl qəbulu dayandırıldı</translation>
+    </message>
+    <message>
+        <source>The files were not accepted in time</source>
+        <translation>Fayllar vaxtında qəbul edilmədi</translation>
+    </message>
+    <message>
+        <source>The other computer stopped responding</source>
+        <translation>Digər kompüter cavab vermir</translation>
+    </message>
+    <message>
+        <source>The other computer closed the connection</source>
+        <translation>Digər kompüter bağlantını bağladı</translation>
+    </message>
+    <message>
+        <source>The other computer sent data before it was accepted</source>
+        <translation>Digər kompüter qəbul edilməmişdən əvvəl məlumat göndərdi</translation>
+    </message>
+    <message>
+        <source>Could not create the folder %1</source>
+        <extracomment>%1 is a folder</extracomment>
+        <translation>%1 qovluğunu yaratmaq mümkün olmadı</translation>
+    </message>
+    <message>
+        <source>There is not enough free space for these files</source>
+        <translation>Bu fayllar üçün kifayət qədər boş yer yoxdur</translation>
+    </message>
+    <message>
+        <source>Could not save %1</source>
+        <extracomment>%1 is a file name</extracomment>
+        <translation>%1 saxlanmadı</translation>
+    </message>
+</context>
+<context>
+    <name>deskflow::gui::FileSender</name>
+    <message>
+        <source>The other computer stopped responding</source>
+        <translation>Digər kompüter cavab vermir</translation>
+    </message>
+    <message>
+        <source>Nobody answered on the other computer</source>
+        <translation>Digər kompüterdə heç kim cavab vermədi</translation>
+    </message>
+    <message>
+        <source>Could not reach the other computer</source>
+        <translation>Digər kompüterə çatmaq mümkün olmadı</translation>
+    </message>
+    <message>
+        <source>No files were chosen</source>
+        <translation>Heç bir fayl seçilmədi</translation>
+    </message>
+    <message>
+        <source>Up to %1 files can be sent at once</source>
+        <extracomment>%1 is the most files that can be sent at once</extracomment>
+        <translation>Bir dəfəyə ən çox %1 fayl göndərmək olar</translation>
+    </message>
+    <message>
+        <source>%1 is a folder, only files can be sent</source>
+        <extracomment>%1 is a folder name</extracomment>
+        <translation>%1 qovluqdur, yalnız fayl göndərmək olar</translation>
+    </message>
+    <message>
+        <source>%1 can&apos;t be read</source>
+        <extracomment>%1 is a file name</extracomment>
+        <translation>%1 oxuna bilmir</translation>
+    </message>
+    <message>
+        <source>Sending was cancelled</source>
+        <translation>Göndərmə ləğv edildi</translation>
+    </message>
+    <message>
+        <source>The other computer could not be verified, connect to it with %1 first</source>
+        <translation>Digər kompüter təsdiqlənmədi, əvvəlcə ona %1 ilə qoşulun</translation>
+    </message>
+    <message>
+        <source>The other computer sent an answer that could not be read</source>
+        <translation>Digər kompüterin cavabı oxunmadı</translation>
+    </message>
+    <message>
+        <source>The other computer declined the files</source>
+        <translation>Digər kompüter faylları rədd etdi</translation>
+    </message>
+    <message>
+        <source>The transfer ended early</source>
+        <translation>Ötürmə vaxtından əvvəl bitdi</translation>
+    </message>
+    <message>
+        <source>%1 changed while it was being sent</source>
+        <extracomment>%1 is a file name</extracomment>
+        <translation>%1 göndərilərkən dəyişdi</translation>
     </message>
 </context>
 <context>

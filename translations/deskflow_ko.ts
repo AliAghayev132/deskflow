@@ -978,6 +978,129 @@ Additionally, check you are able to %1 the server config file: %2</source>
         <source>&amp;Forget these computers</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Receiving files from %1: %2 of %3</source>
+        <extracomment>%1 is a computer name, %2 and %3 are sizes like &quot;3.1 MB&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Send &amp;files...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Send files to a connected computer, or drop them on this window</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Send files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn on TLS encryption in Preferences to send files.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connect to another computer first. Files can be sent to computers that are connected and run this version of %1.</source>
+        <extracomment>%1 is the app name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Send to:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose files to send to %1</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Waiting for %1 to accept the files...</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sending files to %1: %2 of %3</source>
+        <extracomment>%1 is a computer name, %2 and %3 are sizes like &quot;3.1 MB&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n file(s) sent to %1</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Files sent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not send files to %1: %2</source>
+        <extracomment>%1 is a computer name, %2 the reason</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Files not sent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connecting to %1...</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Receive files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 wants to send you %n file(s), %2 in total.</source>
+        <extracomment>%1 is a computer name, %2 a size like &quot;3.1 MB&quot;</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The sending computer could not be identified. Only accept if you expected these files.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This is not a computer you have accepted before. Its pairing code is %1, only accept if the sending computer shows the same code.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save to Downloads</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Decline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n file(s) from %1 saved in %2</source>
+        <extracomment>%1 is a computer name, %2 a folder</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Files received</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Receiving files from %1 failed: %2</source>
+        <extracomment>%1 is a computer name, %2 the reason</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Files not received</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>NewComputerWidget</name>
@@ -1850,6 +1973,102 @@ Enabling this setting will disable the server config GUI.</source>
     <message>
         <source>Image %1 × %2</source>
         <extracomment>%1 and %2 are the width and height in pixels</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>deskflow::gui::FileReceiver</name>
+    <message>
+        <source>Receiving files was stopped</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The files were not accepted in time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The other computer stopped responding</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The other computer closed the connection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The other computer sent data before it was accepted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not create the folder %1</source>
+        <extracomment>%1 is a folder</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>There is not enough free space for these files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not save %1</source>
+        <extracomment>%1 is a file name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>deskflow::gui::FileSender</name>
+    <message>
+        <source>The other computer stopped responding</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nobody answered on the other computer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not reach the other computer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No files were chosen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Up to %1 files can be sent at once</source>
+        <extracomment>%1 is the most files that can be sent at once</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is a folder, only files can be sent</source>
+        <extracomment>%1 is a folder name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 can&apos;t be read</source>
+        <extracomment>%1 is a file name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sending was cancelled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The other computer could not be verified, connect to it with %1 first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The other computer sent an answer that could not be read</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The other computer declined the files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The transfer ended early</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 changed while it was being sent</source>
+        <extracomment>%1 is a file name</extracomment>
         <translation type="unfinished"></translation>
     </message>
 </context>

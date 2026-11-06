@@ -31,6 +31,7 @@
 #include "gui/TlsUtility.h"
 #include "gui/core/ClipboardHistory.h"
 #include "gui/core/CoreProcess.h"
+#include "gui/core/FileTransfer.h"
 #include "gui/core/PairingCode.h"
 #include "gui/core/ServerDiscovery.h"
 #include "gui/core/WakeOnLan.h"
@@ -47,14 +48,18 @@
 #include <QComboBox>
 #include <QDateTime>
 #include <QDesktopServices>
+#include <QDragEnterEvent>
+#include <QDropEvent>
 #include <QFileDialog>
 #include <QGuiApplication>
+#include <QInputDialog>
 #include <QLocalServer>
 #include <QLocalSocket>
 #include <QLocale>
 #include <QMenu>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QMimeData>
 #include <QNetworkAccessManager>
 #include <QNetworkInterface>
 #include <QPixmap>
@@ -64,7 +69,9 @@
 #include <QScreen>
 #include <QScrollBar>
 #include <QSignalBlocker>
+#include <QStandardPaths>
 
+#include <algorithm>
 #include <memory>
 
 #if defined(Q_OS_MACOS)
@@ -101,7 +108,9 @@ MainWindow::MainWindow()
       m_actionSetupWizard{new QAction(this)},
       m_clipboardHistory{new ClipboardHistory(QGuiApplication::clipboard(), this)},
       m_menuClipboard{new QMenu(this)},
-      m_menuWake{new QMenu(this)}
+      m_menuWake{new QMenu(this)},
+      m_fileReceiver{new FileReceiver(this)},
+      m_actionSendFiles{new QAction(this)}
 {
   ui->setupUi(this);
 
@@ -156,6 +165,25 @@ MainWindow::MainWindow()
   m_menuClipboard->setToolTipsVisible(true);
   connect(m_menuClipboard, &QMenu::aboutToShow, this, &MainWindow::refreshClipboardMenu);
   m_menuWake->setToolTipsVisible(true);
+
+  m_actionSendFiles->setIcon(QIcon::fromTheme(QStringLiteral("document-send")));
+  m_actionSendFiles->setMenuRole(QAction::NoRole);
+  m_actionSendFiles->setEnabled(false);
+  connect(m_actionSendFiles, &QAction::triggered, this, [this] { sendFiles(); });
+  connect(m_fileReceiver, &FileReceiver::offered, this, &MainWindow::fileOffered);
+  connect(m_fileReceiver, &FileReceiver::finished, this, &MainWindow::filesReceived);
+  connect(m_fileReceiver, &FileReceiver::progress, this, [this](int id, qint64 received, qint64 total) {
+    //: %1 is a computer name, %2 and %3 are sizes like "3.1 MB"
+    m_statusBar->showMessage(
+        tr("Receiving files from %1: %2 of %3")
+            .arg(m_offerSenders.value(id), filetransfer::sizeText(received), filetransfer::sizeText(total))
+    );
+  });
+  connect(m_trayIcon, &QSystemTrayIcon::messageClicked, this, [this] {
+    if (!m_notifiedFolder.isEmpty())
+      QDesktopServices::openUrl(QUrl::fromLocalFile(m_notifiedFolder));
+  });
+  setAcceptDrops(true);
   connect(m_menuWake, &QMenu::aboutToShow, this, &MainWindow::refreshWakeMenu);
   // macOS builds the tray menu natively, so it needs items before it is first opened
   refreshClipboardMenu();
@@ -430,6 +458,7 @@ void MainWindow::settingsChanged(const QString &key)
       m_fingerprint = {QCryptographicHash::Sha256, TlsUtility::certFingerprint()};
     }
     updateFingerprintButton();
+    updateFileReceiver();
     updateSecurityIcon(m_statusBar->securityIconVisible());
     return;
   }
@@ -748,6 +777,7 @@ void MainWindow::createMenuBar()
   m_menuFile->addAction(m_actionRestartCore);
   m_menuFile->addAction(m_actionStopCore);
   m_menuFile->addSeparator();
+  m_menuFile->addAction(m_actionSendFiles);
   m_menuFile->addMenu(m_menuWake);
   m_menuFile->addSeparator();
   m_menuFile->addAction(m_actionQuit);
@@ -780,6 +810,7 @@ void MainWindow::setupTrayIcon()
   trayMenu->insertSeparator(m_actionMinimize);
   trayMenu->insertMenu(m_actionMinimize, m_menuProfiles);
   trayMenu->insertMenu(m_actionMinimize, m_menuClipboard);
+  trayMenu->insertAction(m_actionMinimize, m_actionSendFiles);
   trayMenu->insertMenu(m_actionMinimize, m_menuWake);
   trayMenu->insertSeparator(m_actionMinimize);
   trayMenu->insertSeparator(m_actionTrayQuit);
@@ -1050,6 +1081,7 @@ void MainWindow::coreProcessStateChanged(ProcessState state)
   updateStatus();
   updateDiscovery();
   updateLink();
+  updateFileReceiver();
 
   if (state == Stopped || state == Stopping) {
     m_connectionsPanel->clear();
@@ -1104,6 +1136,7 @@ void MainWindow::coreConnectionStateChanged(ConnectionState state)
   if (m_coreProcess.mode() == CoreMode::Client && m_coreProcess.isStarted())
     m_connectionsPanel->showClient(state, ui->cbHostname->currentText());
   updateLink();
+  m_actionSendFiles->setEnabled(TlsUtility::isEnabled() && m_coreProcess.isStarted());
 
   // always assume connection is not secure when connection changes
   // to anything except connected. the only way the padlock shows is
@@ -1201,6 +1234,8 @@ void MainWindow::updateText()
   m_menuProfiles->setTitle(tr("&Profiles"));
   m_menuClipboard->setTitle(tr("&Clipboard history"));
   m_menuWake->setTitle(tr("&Wake up"));
+  m_actionSendFiles->setText(tr("Send &files..."));
+  m_actionSendFiles->setToolTip(tr("Send files to a connected computer, or drop them on this window"));
 
   m_actionMinimize->setText(tr("&Minimize to tray"));
   m_actionQuit->setText(tr("&Quit"));
@@ -1625,6 +1660,241 @@ void MainWindow::updateLink()
     return;
   }
   m_discovery->startLink(Settings::value(Settings::Core::ComputerName).toString(), ui->cbHostname->currentText());
+}
+
+void MainWindow::updateFileReceiver()
+{
+  const bool receive = m_coreProcess.isStarted() && TlsUtility::isEnabled() && !m_fingerprint.data.isEmpty();
+  m_actionSendFiles->setEnabled(receive);
+  if (!receive) {
+    m_fileReceiver->close();
+    return;
+  }
+  m_fileReceiver->listen(filetransfer::sslConfiguration(Settings::value(Settings::Security::Certificate).toString()));
+}
+
+QList<QPair<QString, QHostAddress>> MainWindow::fileTargets() const
+{
+  QList<QPair<QString, QHostAddress>> targets;
+  if (!m_coreProcess.isStarted())
+    return targets;
+
+  if (m_coreProcess.mode() == CoreMode::Client) {
+    if (m_coreProcess.connectionState() == ConnectionState::Connected && !m_discovery->linkAddress().isNull())
+      targets.append({ui->cbHostname->currentText(), m_discovery->linkAddress()});
+    return targets;
+  }
+
+  // Clients show up once they said hello, which also tells us their address
+  const auto connected = m_connectionsPanel->connectedNames();
+  const auto peers = m_discovery->linkPeers();
+  for (const auto &peer : peers) {
+    if (connected.contains(peer.name))
+      targets.append({peer.name, peer.address});
+  }
+  std::ranges::sort(targets, [](const auto &a, const auto &b) {
+    return a.first.compare(b.first, Qt::CaseInsensitive) < 0;
+  });
+  return targets;
+}
+
+bool MainWindow::isTrustedComputer(const QByteArray &fingerprint) const
+{
+  if (fingerprint.isEmpty())
+    return false;
+  const Fingerprint wanted{QCryptographicHash::Sha256, fingerprint};
+  for (const auto &path : {Settings::tlsTrustedServersDb(), Settings::tlsTrustedClientsDb()}) {
+    FingerprintDatabase db;
+    db.read(path);
+    if (db.isTrusted(wanted))
+      return true;
+  }
+  return false;
+}
+
+void MainWindow::sendFiles(QStringList paths)
+{
+  const auto title = tr("Send files");
+  if (!TlsUtility::isEnabled()) {
+    QMessageBox::information(this, title, tr("Turn on TLS encryption in Preferences to send files."));
+    return;
+  }
+
+  const auto targets = fileTargets();
+  if (targets.isEmpty()) {
+    //: %1 is the app name
+    QMessageBox::information(
+        this, title,
+        tr("Connect to another computer first. Files can be sent to computers that are connected and run this "
+           "version of %1.")
+            .arg(kAppName)
+    );
+    return;
+  }
+
+  auto target = targets.first();
+  if (targets.size() > 1) {
+    QStringList names;
+    for (const auto &[name, address] : targets)
+      names.append(name);
+    bool ok = false;
+    const auto chosen = QInputDialog::getItem(this, title, tr("Send to:"), names, 0, false, &ok);
+    if (!ok)
+      return;
+    target = targets.at(names.indexOf(chosen));
+  }
+
+  if (paths.isEmpty()) {
+    //: %1 is a computer name
+    paths = QFileDialog::getOpenFileNames(this, tr("Choose files to send to %1").arg(target.first));
+    if (paths.isEmpty())
+      return;
+  }
+
+  auto sender = new FileSender(Settings::value(Settings::Core::ComputerName).toString(), paths, this);
+  if (const auto problem = sender->checkFiles(); !problem.isEmpty()) {
+    QMessageBox::warning(this, title, problem);
+    sender->deleteLater();
+    return;
+  }
+
+  const auto name = target.first;
+  connect(sender, &FileSender::waiting, this, [this, name] {
+    //: %1 is a computer name
+    m_statusBar->showMessage(tr("Waiting for %1 to accept the files...").arg(name));
+  });
+  connect(sender, &FileSender::progress, this, [this, name](qint64 sent, qint64 total) {
+    //: %1 is a computer name, %2 and %3 are sizes like "3.1 MB"
+    m_statusBar->showMessage(
+        tr("Sending files to %1: %2 of %3").arg(name, filetransfer::sizeText(sent), filetransfer::sizeText(total))
+    );
+  });
+  connect(sender, &FileSender::finished, this, [this, sender, name](bool ok, const QString &error) {
+    sender->deleteLater();
+    if (ok) {
+      //: %1 is a computer name
+      const auto text = tr("%n file(s) sent to %1", "", sender->fileCount()).arg(name);
+      m_statusBar->showMessage(text, 10000);
+      notify(tr("Files sent"), text);
+    } else {
+      //: %1 is a computer name, %2 the reason
+      const auto text = tr("Could not send files to %1: %2").arg(name, error);
+      m_statusBar->showMessage(text, 15000);
+      notify(tr("Files not sent"), text);
+    }
+  });
+
+  //: %1 is a computer name
+  m_statusBar->showMessage(tr("Connecting to %1...").arg(name));
+  sender->start(
+      target.second, filetransfer::sslConfiguration(Settings::value(Settings::Security::Certificate).toString()),
+      [this](const QByteArray &fingerprint) { return isTrustedComputer(fingerprint); }
+  );
+}
+
+void MainWindow::fileOffered(int id, const FileOffer &offer)
+{
+  const auto from = offer.from.isEmpty() ? offer.address.toString() : offer.from;
+  m_offerSenders.insert(id, from);
+
+  QStringList shown;
+  for (qsizetype i = 0; i < offer.names.size() && i < 8; ++i)
+    shown.append(QStringLiteral("• %1 (%2)").arg(offer.names.at(i), filetransfer::sizeText(offer.sizes.at(i))));
+  if (offer.names.size() > 8)
+    shown.append(tr("and %n more", "", static_cast<int>(offer.names.size() - 8)));
+
+  auto box = new QMessageBox(this);
+  box->setAttribute(Qt::WA_DeleteOnClose);
+  box->setWindowTitle(tr("Receive files"));
+  box->setIcon(QMessageBox::Question);
+  //: %1 is a computer name, %2 a size like "3.1 MB"
+  box->setText(tr("%1 wants to send you %n file(s), %2 in total.", "", static_cast<int>(offer.names.size()))
+                   .arg(from, filetransfer::sizeText(offer.totalSize())));
+
+  auto details = shown.join(QLatin1Char('\n'));
+  if (!isTrustedComputer(offer.fingerprint)) {
+    box->setIcon(QMessageBox::Warning);
+    const auto code = pairingCode(offer.fingerprint);
+    details += QStringLiteral("\n\n");
+    details += code.isEmpty()
+                   ? tr("The sending computer could not be identified. Only accept if you expected these files.")
+                   //: %1 is a pairing code like "482 913 077 251"
+                   : tr("This is not a computer you have accepted before. Its pairing code is %1, only accept if "
+                        "the sending computer shows the same code.")
+                         .arg(code);
+  }
+  box->setInformativeText(details);
+
+  const auto folder = [] {
+    const auto downloads = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
+    return downloads.isEmpty() ? QDir::homePath() : downloads;
+  }();
+  auto accept = box->addButton(tr("Save to Downloads"), QMessageBox::AcceptRole);
+  box->addButton(tr("Decline"), QMessageBox::RejectRole);
+  box->setDefaultButton(qobject_cast<QPushButton *>(box->buttons().last()));
+
+  connect(box, &QMessageBox::buttonClicked, this, [this, id, accept, folder](QAbstractButton *button) {
+    if (button == accept) {
+      m_fileReceiver->accept(id, folder);
+    } else {
+      m_offerSenders.remove(id);
+      m_fileReceiver->decline(id);
+    }
+  });
+  // An offer that times out on the other side closes the question too
+  connect(m_fileReceiver, &FileReceiver::finished, box, [box, id](int finishedId) {
+    if (finishedId == id)
+      box->close();
+  });
+
+  notify(tr("Receive files"), box->text());
+  box->open();
+  box->raise();
+  box->activateWindow();
+}
+
+void MainWindow::filesReceived(int id, bool ok, const QString &error, const QStringList &files)
+{
+  const auto from = m_offerSenders.take(id);
+  if (ok) {
+    const auto folder = files.isEmpty() ? QString() : QFileInfo(files.first()).absolutePath();
+    //: %1 is a computer name, %2 a folder
+    const auto text = tr("%n file(s) from %1 saved in %2", "", static_cast<int>(files.size()))
+                          .arg(from, QDir::toNativeSeparators(folder));
+    m_statusBar->showMessage(text, 15000);
+    notify(tr("Files received"), text, folder);
+  } else {
+    //: %1 is a computer name, %2 the reason
+    const auto text = tr("Receiving files from %1 failed: %2").arg(from, error);
+    m_statusBar->showMessage(text, 15000);
+    notify(tr("Files not received"), text);
+  }
+}
+
+void MainWindow::notify(const QString &title, const QString &text, const QString &folder)
+{
+  m_notifiedFolder = folder;
+  if (m_trayIcon->isVisible() && QSystemTrayIcon::supportsMessages())
+    m_trayIcon->showMessage(title, text, QSystemTrayIcon::Information, 8000);
+}
+
+void MainWindow::dragEnterEvent(QDragEnterEvent *event)
+{
+  const auto urls = event->mimeData()->urls();
+  const bool files = !urls.isEmpty() && std::ranges::all_of(urls, [](const QUrl &url) { return url.isLocalFile(); });
+  if (files && m_actionSendFiles->isEnabled())
+    event->acceptProposedAction();
+}
+
+void MainWindow::dropEvent(QDropEvent *event)
+{
+  QStringList paths;
+  const auto urls = event->mimeData()->urls();
+  for (const auto &url : urls)
+    paths.append(url.toLocalFile());
+  event->acceptProposedAction();
+  // Leave the drop handler before any dialog opens
+  QTimer::singleShot(0, this, [this, paths] { sendFiles(paths); });
 }
 
 void MainWindow::rememberClient(const LinkPeer &peer)

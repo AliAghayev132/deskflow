@@ -28,3 +28,10 @@ create_test(
   SOURCE ClipboardHistoryTests.cpp
   WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/gui"
 )
+
+create_test(
+  NAME FileTransferTests
+  DEPENDS gui
+  SOURCE FileTransferTests.cpp
+  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/gui"
+)

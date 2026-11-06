@@ -46,6 +46,8 @@ add_library(${target} STATIC
   core/ClipboardHistory.h
   core/CoreProcess.cpp
   core/CoreProcess.h
+  core/FileTransfer.cpp
+  core/FileTransfer.h
   core/NetworkMonitor.cpp
   core/PairingCode.cpp
   core/PairingCode.h

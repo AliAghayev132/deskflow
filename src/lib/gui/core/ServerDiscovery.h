@@ -144,6 +144,14 @@ public:
   [[nodiscard]] bool isLinked() const;
 
   /**
+   * @brief Address of the server this client says hello to, null until it is known
+   */
+  [[nodiscard]] QHostAddress linkAddress() const
+  {
+    return m_linkAddress;
+  }
+
+  /**
    * @brief The address part of the "Connect to" text, e.g. "pc.local" from "pc.local:24800, 10.0.0.2"
    */
   static QString hostPart(const QString &serverHost);
