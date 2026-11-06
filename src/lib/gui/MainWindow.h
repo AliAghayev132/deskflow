@@ -157,6 +157,11 @@ private:
    */
   void refreshProfiles();
 
+  /**
+   * @brief Draw the mode card icons in the colors of the current theme
+   */
+  void updateModeIcons();
+
   bool canRunCore() const;
 
   /**

@@ -16,6 +16,7 @@
 #include "gui/MainWindow.h"
 #include "gui/Messages.h"
 #include "gui/StyleUtils.h"
+#include "gui/Theme.h"
 
 #include <QApplication>
 #include <QCommandLineParser>
@@ -120,7 +121,7 @@ int main(int argc, char *argv[])
   }
 
   if (!deskflow::platform::isMac() && qEnvironmentVariable("XDG_CURRENT_DESKTOP") != QLatin1String("KDE")) {
-    QApplication::setStyle("fusion");
+    deskflow::gui::theme::apply();
   }
 
   // Sets the fallback icon path and fallback theme

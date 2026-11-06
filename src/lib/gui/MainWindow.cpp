@@ -12,6 +12,7 @@
 
 #include "Diagnostic.h"
 #include "StyleUtils.h"
+#include "Theme.h"
 
 #include "dialogs/AboutDialog.h"
 #include "dialogs/ClientConfigDialog.h"
@@ -242,8 +243,15 @@ void MainWindow::setupControls()
   setStatusBar(m_statusBar);
 
   m_profileBar = new ProfileBar(this);
-  if (auto layout = qobject_cast<QBoxLayout *>(ui->topLevelWidget->layout()))
-    layout->insertWidget(0, m_profileBar);
+  ui->profileContainer->layout()->addWidget(m_profileBar);
+
+  updateModeIcons();
+}
+
+void MainWindow::updateModeIcons()
+{
+  ui->rbModeServer->setIcon(theme::serverModeIcon());
+  ui->rbModeClient->setIcon(theme::clientModeIcon());
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -602,13 +610,15 @@ void MainWindow::updateModeControlLabels()
   m_actionStopCore->setText(stopText);
   m_actionStopCore->setIcon(stopIcon);
 
-  if (isStarted) {
-    ui->btnToggleCore->setText(stopText);
-    ui->btnToggleCore->setIcon(stopIcon);
-  } else {
-    ui->btnToggleCore->setText(startText);
-    ui->btnToggleCore->setIcon(startIcon);
+  // Lets the style sheet show the button as a stop action while the core runs
+  if (ui->btnToggleCore->property("running").toBool() != isStarted) {
+    ui->btnToggleCore->setProperty("running", isStarted);
+    ui->btnToggleCore->style()->unpolish(ui->btnToggleCore);
+    ui->btnToggleCore->style()->polish(ui->btnToggleCore);
   }
+
+  // The main button is styled by color, the icons are kept for menus only
+  ui->btnToggleCore->setText(isStarted ? stopText : startText);
 }
 
 void MainWindow::updateSecurityIcon(bool visible)
@@ -1074,6 +1084,7 @@ void MainWindow::changeEvent(QEvent *e)
     updateIconTheme();
     setWindowIcon(QIcon::fromTheme(kRevFqdnName));
     setTrayIcon();
+    updateModeIcons();
   } else if (e->type() == QEvent::LanguageChange) {
     ui->retranslateUi(this);
     updateModeControlLabels();

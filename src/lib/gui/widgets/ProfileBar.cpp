@@ -31,16 +31,13 @@ ProfileBar::ProfileBar(QWidget *parent)
       m_actionDelete{new QAction(this)}
 {
   setObjectName(QStringLiteral("profileBar"));
+  m_label->setProperty("role", QStringLiteral("caption"));
 
   m_combo->setObjectName(QStringLiteral("cbProfile"));
   m_combo->setSizeAdjustPolicy(QComboBox::AdjustToContents);
   m_combo->setMinimumContentsLength(12);
   m_label->setBuddy(m_combo);
 
-  m_actionNew->setIcon(QIcon::fromTheme(QStringLiteral("list-add")));
-  m_actionDuplicate->setIcon(QIcon::fromTheme(QStringLiteral("edit-copy")));
-  m_actionRename->setIcon(QIcon::fromTheme(QStringLiteral("edit-rename")));
-  m_actionDelete->setIcon(QIcon::fromTheme(QStringLiteral("edit-delete")));
   m_menu->addActions({m_actionNew, m_actionDuplicate, m_actionRename});
   m_menu->addSeparator();
   m_menu->addAction(m_actionDelete);
@@ -52,11 +49,11 @@ ProfileBar::ProfileBar(QWidget *parent)
   m_btnMenu->setAutoRaise(true);
 
   auto layout = new QHBoxLayout(this);
-  layout->setContentsMargins(3, 0, 3, 0);
+  layout->setContentsMargins(0, 0, 0, 0);
+  layout->setSpacing(6);
   layout->addWidget(m_label);
   layout->addWidget(m_combo);
   layout->addWidget(m_btnMenu);
-  layout->addStretch();
 
   connect(m_combo, &QComboBox::activated, this, &ProfileBar::comboActivated);
   connect(m_actionNew, &QAction::triggered, this, &ProfileBar::newProfile);

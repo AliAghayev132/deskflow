@@ -29,6 +29,8 @@ add_library(${target} STATIC
   Messages.cpp
   Messages.h
   StyleUtils.h
+  Theme.cpp
+  Theme.h
   TlsUtility.cpp
   TlsUtility.h
   VersionChecker.cpp
