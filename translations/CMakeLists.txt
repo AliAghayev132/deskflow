@@ -12,6 +12,8 @@ set (${CMAKE_PROJECT_NAME}_TRS
   ${CMAKE_PROJECT_NAME}_zh_CN.ts
   ${CMAKE_PROJECT_NAME}_ru.ts
   ${CMAKE_PROJECT_NAME}_ko.ts
+  ${CMAKE_PROJECT_NAME}_az.ts
+  ${CMAKE_PROJECT_NAME}_tr.ts
 )
 
 set(TR_OPTIONS -no-ui-lines -locations none -silent)
