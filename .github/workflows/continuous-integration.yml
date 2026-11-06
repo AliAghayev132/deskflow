@@ -20,6 +20,9 @@ env:
   PACKAGE_PREFIX: "deskflow"
   PACKAGE_PATH: ./dist
   CMAKE_CONFIGURE: "cmake -Bbuild -DCMAKE_BUILD_TYPE=Release -DSKIP_BUILD_TESTS=ON -DCMAKE_COMPILE_WARNING_AS_ERROR=ON"
+  # Forks usually have no Apple signing secrets; then macOS builds are signed ad hoc and not notarized
+  IS_RELEASE_REF: ${{ (github.ref == 'refs/heads/master') || (contains(github.ref, '/tags/v')) }}
+  IS_UPSTREAM: ${{ github.repository == 'deskflow/deskflow' }}
 
 jobs:
   # Quality gate to allow PR merge, used in the branch protection rules.
@@ -88,6 +91,8 @@ jobs:
       contents: write
     container: ${{ matrix.target.container }}
     timeout-minutes: ${{ matrix.target.timeout }}
+    env:
+      HAS_APPLE_SIGNING: ${{ secrets.APPLE_CODESIGN_P12 != '' && secrets.APPLE_CODESIGN_DEV != '' }}
     strategy:
       # Normally, we want to fail fast, but in this case we shouldn't since one target may
       # fail due to transient issues unrelated to the build.
@@ -272,11 +277,11 @@ jobs:
 
       - name: Configure
         env:
-          APPLE_CODESIGN_DEV: ${{ ((github.ref == 'refs/heads/master') || (contains(github.ref, '/tags/v'))) && secrets.APPLE_CODESIGN_DEV || '' }}
+          APPLE_CODESIGN_DEV: ${{ env.IS_RELEASE_REF == 'true' && secrets.APPLE_CODESIGN_DEV || '' }}
         run: ${{env.CMAKE_CONFIGURE}} ${{ matrix.target.config-args }} ${{ steps.get-deps.outputs.vcpkg-cmake-config }} -DPACKAGE_VERSION_LABEL="${{env.DESKFLOW_PACKAGE_VERSION}}"
 
       - name: Import code-signing certificate
-        if: runner.os == 'macOS' && ((github.ref == 'refs/heads/master') || (contains(github.ref, '/tags/v')))
+        if: runner.os == 'macOS' && env.IS_RELEASE_REF == 'true' && env.HAS_APPLE_SIGNING == 'true'
         uses: ./.github/actions/codesign-keychain
         with:
           action: import
@@ -320,7 +325,7 @@ jobs:
           fi
 
       - name: Notarize (macOS)
-        if: runner.os == 'macOS' && ((github.ref == 'refs/heads/master') || (contains(github.ref, '/tags/v')))
+        if: runner.os == 'macOS' && env.IS_RELEASE_REF == 'true' && env.HAS_APPLE_SIGNING == 'true'
         shell: bash
         env:
           APPLE_NOTARIZE_ID: ${{ secrets.APPLE_NOTARIZE_ID }}
@@ -342,7 +347,7 @@ jobs:
           xcrun stapler staple build/deskflow[-_]*.dmg
 
       - name: Clean up keychain
-        if: always() && runner.os == 'macOS' && ((github.ref == 'refs/heads/master') || (contains(github.ref, '/tags/v')))
+        if: always() && runner.os == 'macOS' && env.IS_RELEASE_REF == 'true' && env.HAS_APPLE_SIGNING == 'true'
         uses: ./.github/actions/codesign-keychain
         with:
           action: cleanup
@@ -368,7 +373,7 @@ jobs:
           like: ${{ matrix.target.like }}
 
       - name: Update Development Documentation
-        if: matrix.target.like == 'arch' && github.ref == 'refs/heads/master'
+        if: matrix.target.like == 'arch' && github.ref == 'refs/heads/master' && env.IS_UPSTREAM == 'true'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -468,6 +473,8 @@ jobs:
     needs: ci-passed
     if: (github.ref == 'refs/heads/master') || (contains(github.ref, '/tags/v'))
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Fancy Checkout
@@ -487,12 +494,31 @@ jobs:
           rm -rf $GITHUB_WORKSPACE/package-*
           echo "Build: ${{env.DESKFLOW_VERSION }}" > sums.txt
           sha256sum deskflow-* >> sums.txt
-          export changes=$(git log --abbrev=8 --abbrev-commit --pretty=format:" - %s(%h) by %an" continuous..HEAD)
+          # A fresh fork may not have the continuous tag yet
+          if git rev-parse -q --verify "refs/tags/continuous" >/dev/null; then
+            range="continuous..HEAD"
+          else
+            range="-30 HEAD"
+          fi
+          export changes=$(git log --abbrev=8 --abbrev-commit --pretty=format:" - %s(%h) by %an" $range)
           echo -e "## Latest Changes:\n$changes" > changelog.txt
+          touch notes.txt
+          if [[ "$IS_UPSTREAM" != "true" ]]; then
+            # Fork builds are not notarized, so macOS needs one extra step
+            {
+              echo "> **macOS:** after copying Deskflow to Applications, run"
+              echo "> \`xattr -cr /Applications/Deskflow.app\` once, then open it and allow Accessibility."
+              echo
+            } > notes.txt
+            cat notes.txt changelog.txt > changelog.new && mv changelog.new changelog.txt
+          fi
 
       - name: Update continuous tag
         if: (github.ref == 'refs/heads/master') && !(contains(github.ref, '/tags/v'))
-        run: gh release delete continuous --cleanup-tag
+        run: |
+          gh release delete continuous --cleanup-tag || echo "No continuous release to delete"
+          # The tag can exist without a release, for example when it came along with a fork
+          gh api -X DELETE "repos/${{ github.repository }}/git/refs/tags/continuous" || true
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
 
@@ -517,6 +543,7 @@ jobs:
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"
           generate_release_notes: true
+          body_path: notes.txt
           make_latest: true
           prerelease: false
           files: |
@@ -524,6 +551,7 @@ jobs:
             sums.txt
 
       - name: Update Homebrewtap
+        if: env.IS_UPSTREAM == 'true'
         shell: bash
         run: |
           curl -L -X POST \
