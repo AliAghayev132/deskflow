@@ -22,6 +22,7 @@
 #include <QCommandLineParser>
 #include <QLocalSocket>
 #include <QMessageBox>
+#include <QPushButton>
 #include <QSharedMemory>
 
 #if defined(Q_OS_MACOS)
@@ -120,7 +121,8 @@ int main(int argc, char *argv[])
     return s_exitDuplicate;
   }
 
-  if (!deskflow::platform::isMac() && qEnvironmentVariable("XDG_CURRENT_DESKTOP") != QLatin1String("KDE")) {
+  // The Deskflow theme is used everywhere except KDE, whose users expect their own Plasma style
+  if (qEnvironmentVariable("XDG_CURRENT_DESKTOP") != QLatin1String("KDE")) {
     deskflow::gui::theme::apply();
   }
 
