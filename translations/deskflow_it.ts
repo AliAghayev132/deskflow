@@ -1075,6 +1075,18 @@ Inoltre, verifica di poter %1 il file di configurazione del server: %2</translat
         <source>Super</source>
         <translation type="unfinished">Super</translation>
     </message>
+    <message>
+        <source>%1 needs Accessibility access to share your keyboard and mouse.</source>
+        <extracomment>%1 is the app name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn on %1 in System Settings &gt; Privacy &amp; Security &gt; Accessibility, then click Retry.
+
+If %1 is already on, select it, remove it with the minus button and add it again. This is needed after installing a new version.</source>
+        <extracomment>%1 is the app name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>SearchWidget</name>

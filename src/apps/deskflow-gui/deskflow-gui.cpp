@@ -176,6 +176,31 @@ bool checkMacAssistiveDevices()
 
   bool result = AXIsProcessTrustedWithOptions(options);
   CFRelease(options);
-  return result;
+
+  // Wait for the user instead of quitting, so turning the switch on in System Settings is enough
+  while (!result) {
+    QMessageBox box;
+    box.setIcon(QMessageBox::Information);
+    box.setWindowTitle(kAppName);
+    //: %1 is the app name
+    box.setText(QObject::tr("%1 needs Accessibility access to share your keyboard and mouse.").arg(kAppName));
+    //: %1 is the app name
+    box.setInformativeText(
+        QObject::tr(
+            "Turn on %1 in System Settings > Privacy & Security > Accessibility, then click Retry.\n\n"
+            "If %1 is already on, select it, remove it with the minus button and add it again. "
+            "This is needed after installing a new version."
+        )
+            .arg(kAppName)
+    );
+    auto retry = box.addButton(QObject::tr("Retry"), QMessageBox::AcceptRole);
+    box.addButton(QMessageBox::Close);
+    box.setDefaultButton(retry);
+    box.exec();
+    if (box.clickedButton() != retry)
+      return false;
+    result = AXIsProcessTrusted();
+  }
+  return true;
 }
 #endif
