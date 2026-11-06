@@ -1,0 +1,133 @@
+# Keeps a fork up to date with deskflow/deskflow.
+# Once a week it checks for new upstream commits and opens (or refreshes) a pull request with them.
+# Pull requests opened by this workflow do not start CI by themselves, close and reopen the
+# pull request to run the checks before merging.
+
+name: Upstream sync
+
+on:
+  schedule:
+    - cron: "17 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+env:
+  UPSTREAM_REPO: deskflow/deskflow
+  UPSTREAM_BRANCH: master
+  SYNC_BRANCH: upstream-sync
+
+jobs:
+  sync:
+    if: github.repository != 'deskflow/deskflow'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Compare with upstream
+        id: compare
+        shell: bash
+        run: |
+          git remote add upstream "https://github.com/${UPSTREAM_REPO}.git"
+          git fetch --no-tags upstream "${UPSTREAM_BRANCH}"
+
+          behind=$(git rev-list --count HEAD..upstream/${UPSTREAM_BRANCH})
+          echo "behind=${behind}" >> "$GITHUB_OUTPUT"
+          echo "Fork is ${behind} commit(s) behind ${UPSTREAM_REPO}"
+          if [[ "$behind" == "0" ]]; then
+            exit 0
+          fi
+
+          # Check whether the merge would need manual work
+          if git -c user.name=ci -c user.email=ci@localhost merge --no-commit --no-ff "upstream/${UPSTREAM_BRANCH}" >/dev/null 2>&1; then
+            conflicts=no
+          else
+            conflicts=yes
+          fi
+          git merge --abort >/dev/null 2>&1 || true
+          echo "conflicts=${conflicts}" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "${behind} new commit(s) from [${UPSTREAM_REPO}](https://github.com/${UPSTREAM_REPO}/commits/${UPSTREAM_BRANCH})."
+            echo
+            if [[ "$conflicts" == "yes" ]]; then
+              echo "> [!WARNING]"
+              echo "> These changes conflict with this fork. Resolve the conflicts on the \`${SYNC_BRANCH}\` branch before merging."
+            else
+              echo "These changes merge cleanly."
+            fi
+            echo
+            echo "Pull requests opened by a workflow do not start CI, so **close and reopen this pull request** to run the checks."
+            echo
+            echo "### Commits"
+            git log --no-merges --max-count=100 --pretty=format:"- %s (${UPSTREAM_REPO}@%h)" "HEAD..upstream/${UPSTREAM_BRANCH}"
+            echo
+          } > body.md
+
+      - name: Open or update the pull request
+        id: pr
+        if: steps.compare.outputs.behind != '0'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BEHIND: ${{ steps.compare.outputs.behind }}
+        run: |
+          # GitHub refuses pushes that change workflow files from the workflow token,
+          # in that case the fallback step below opens an issue instead
+          if ! git push --force origin "upstream/${UPSTREAM_BRANCH}:refs/heads/${SYNC_BRANCH}"; then
+            echo "pushed=no" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "pushed=yes" >> "$GITHUB_OUTPUT"
+
+          title="Sync with ${UPSTREAM_REPO} (${BEHIND} new commits)"
+          number=$(gh pr list --head "${SYNC_BRANCH}" --state open --json number --jq '.[0].number // empty')
+          if [[ -n "$number" ]]; then
+            gh pr edit "$number" --title "$title" --body-file body.md
+            echo "Updated pull request #${number}"
+          else
+            gh pr create --base "${{ github.event.repository.default_branch }}" --head "${SYNC_BRANCH}" \
+              --title "$title" --body-file body.md
+          fi
+
+      - name: Open or update an issue instead
+        if: steps.compare.outputs.behind != '0' && steps.pr.outputs.pushed == 'no'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BEHIND: ${{ steps.compare.outputs.behind }}
+        run: |
+          {
+            cat body.md
+            echo
+            echo "### How to bring them in"
+            echo "The workflow could not push the \`${SYNC_BRANCH}\` branch, usually because upstream changed files in \`.github/workflows\`. Run these commands, then open a pull request from \`${SYNC_BRANCH}\`:"
+            echo
+            echo '```'
+            echo "git fetch https://github.com/${UPSTREAM_REPO}.git ${UPSTREAM_BRANCH}"
+            echo "git push origin FETCH_HEAD:refs/heads/${SYNC_BRANCH}"
+            echo '```'
+          } > issue.md
+
+          title="Upstream ${UPSTREAM_REPO} has ${BEHIND} new commits"
+          # Forks often have issues turned off, then the job fails so GitHub sends a notification
+          cat issue.md >> "$GITHUB_STEP_SUMMARY"
+          number=$(gh issue list --state open --search "in:title Upstream ${UPSTREAM_REPO} has" --json number --jq '.[0].number // empty' || true)
+          if [[ -n "$number" ]]; then
+            gh issue edit "$number" --title "$title" --body-file issue.md
+          elif ! gh issue create --title "$title" --body-file issue.md; then
+            echo "::error::${title}. See the summary for how to bring them in."
+            exit 1
+          fi
