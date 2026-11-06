@@ -12,18 +12,49 @@
 #include <QMimeData>
 
 #include "ComputerSetupModel.h"
+#include "ComputerTileDelegate.h"
+
+namespace {
+const QSize kTileSize(124, 84);
+}
+
+RemoveComputerWidget::RemoveComputerWidget(QWidget *parent) : QLabel(parent)
+{
+  setAlignment(Qt::AlignCenter);
+  updateTile(false);
+}
+
+void RemoveComputerWidget::updateTile(bool active)
+{
+  setPixmap(ComputerTileDelegate::removeComputerPixmap(kTileSize, palette(), active));
+}
+
+void RemoveComputerWidget::changeEvent(QEvent *event)
+{
+  QLabel::changeEvent(event);
+  if (event->type() == QEvent::PaletteChange)
+    updateTile(false);
+}
+
+void RemoveComputerWidget::dragLeaveEvent(QDragLeaveEvent *event)
+{
+  updateTile(false);
+  QLabel::dragLeaveEvent(event);
+}
 
 void RemoveComputerWidget::dragEnterEvent(QDragEnterEvent *event)
 {
   if (event->mimeData()->hasFormat(ComputerSetupModel::mimeType())) {
     event->setDropAction(Qt::MoveAction);
     event->accept();
+    updateTile(true);
   } else
     event->ignore();
 }
 
 void RemoveComputerWidget::dropEvent(QDropEvent *event)
 {
+  updateTile(false);
   if (event->mimeData()->hasFormat(ComputerSetupModel::mimeType())) {
     event->acceptProposedAction();
     Q_EMIT computerRemoved();

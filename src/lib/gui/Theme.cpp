@@ -297,6 +297,10 @@ QComboBox QAbstractItemView {
   selection-background-color: @accentSoft; selection-color: @text;
 }
 
+/* Computer layout grid */
+QTableView#computerSetupView { background: @window; border: 1px solid @border; border-radius: 12px; padding: 4px; }
+QLabel#lblNewComputer, QLabel#lblRemoveComputer { background: transparent; border: none; }
+
 /* Menus */
 QMenuBar { background: @window; color: @text; padding: 2px 6px; }
 QMenuBar::item { background: transparent; padding: 5px 10px; border-radius: 6px; }

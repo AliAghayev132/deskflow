@@ -98,6 +98,8 @@ add_library(${target} STATIC
   validators/IpAddressValidator.cpp
   validators/IpAddressValidator.h
   widgets/ComputerSetupView.cpp
+  widgets/ComputerTileDelegate.cpp
+  widgets/ComputerTileDelegate.h
   widgets/ComputerSetupView.h
   widgets/FingerprintPreview.cpp
   widgets/FingerprintPreview.h

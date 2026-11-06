@@ -20,6 +20,7 @@
 
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QStyle>
 
 using enum ComputerConfig::SwitchCorner;
 
@@ -41,9 +42,10 @@ ServerConfigDialog::ServerConfigDialog(QWidget *parent, ServerConfig &config)
 
   loadFromConfig();
 
-  ui->lblRemoveComputer->setPixmap(QIcon::fromTheme("user-trash").pixmap(QSize(64, 64)));
   ui->lblNewComputer->setEnabled(!model().isFull());
-  ui->lblNewComputer->setPixmap(QIcon::fromTheme("video-display").pixmap(QSize(64, 64)));
+  ui->label_2->setProperty("role", QStringLiteral("hint"));
+  ui->label_2->style()->unpolish(ui->label_2);
+  ui->label_2->style()->polish(ui->label_2);
   ui->btnBrowseConfigFile->setIcon(QIcon::fromTheme(QIcon::ThemeIcon::DocumentOpen));
 
   if (!deskflow::platform::isWindows())

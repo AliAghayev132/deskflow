@@ -61,6 +61,9 @@ QVariant ComputerSetupModel::data(const QModelIndex &index, int role) const
   case Qt::DisplayRole:
     return computer(index).name();
 
+  case IsServerRole:
+    return computer(index).isServer();
+
   default:
     break;
   }

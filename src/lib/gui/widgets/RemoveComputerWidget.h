@@ -18,13 +18,17 @@ class RemoveComputerWidget : public QLabel
   Q_OBJECT
 
 public:
-  explicit RemoveComputerWidget(QWidget *parent) : QLabel(parent)
-  {
-    // do nothing
-  }
+  explicit RemoveComputerWidget(QWidget *parent);
 
   void dragEnterEvent(QDragEnterEvent *event) override;
+  void dragLeaveEvent(QDragLeaveEvent *event) override;
   void dropEvent(QDropEvent *event) override;
+
+protected:
+  void changeEvent(QEvent *event) override;
+
+private:
+  void updateTile(bool active);
 
 Q_SIGNALS:
   void computerRemoved();

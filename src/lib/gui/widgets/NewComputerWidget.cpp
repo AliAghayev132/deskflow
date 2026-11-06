@@ -8,15 +8,34 @@
 
 #include "NewComputerWidget.h"
 #include "ComputerSetupModel.h"
+#include "ComputerTileDelegate.h"
 
 #include <QDrag>
 #include <QLabel>
 #include <QMimeData>
 #include <QMouseEvent>
 
+namespace {
+const QSize kTileSize(124, 84);
+}
+
 NewComputerWidget::NewComputerWidget(QWidget *parent) : QLabel(parent)
 {
-  // do nothing
+  setCursor(Qt::OpenHandCursor);
+  setAlignment(Qt::AlignCenter);
+  updateTile();
+}
+
+void NewComputerWidget::changeEvent(QEvent *event)
+{
+  QLabel::changeEvent(event);
+  if (event->type() == QEvent::EnabledChange || event->type() == QEvent::PaletteChange)
+    updateTile();
+}
+
+void NewComputerWidget::updateTile()
+{
+  setPixmap(ComputerTileDelegate::newComputerPixmap(kTileSize, palette(), isEnabled()));
 }
 
 void NewComputerWidget::mousePressEvent(QMouseEvent *)
@@ -33,7 +52,7 @@ void NewComputerWidget::mousePressEvent(QMouseEvent *)
 
   auto *pDrag = new QDrag(this);
   pDrag->setMimeData(pMimeData);
-  pDrag->setPixmap(pixmap());
-  pDrag->setHotSpot(QPoint(width() / 2, height() / 2));
+  pDrag->setPixmap(ComputerTileDelegate::tilePixmap(newComputer.name(), false, kTileSize, palette()));
+  pDrag->setHotSpot(QPoint(kTileSize.width() / 2, kTileSize.height() / 2));
   pDrag->exec(Qt::CopyAction, Qt::CopyAction);
 }
