@@ -53,6 +53,8 @@ add_library(${target} STATIC
   core/PairingCode.h
   core/ServerDiscovery.cpp
   core/ServerDiscovery.h
+  core/Updater.cpp
+  core/Updater.h
   core/WakeOnLan.cpp
   core/WakeOnLan.h
   core/NetworkMonitor.h
@@ -136,6 +138,9 @@ add_library(${target} STATIC
   widgets/SettingsDialogButtonBox.cpp
   widgets/SettingsDialogButtonBox.h
 )
+
+# The updater picks the installer built for the same architecture
+target_compile_definitions(${target} PRIVATE DESKFLOW_BUILD_ARCHITECTURE="${BUILD_ARCHITECTURE}")
 
 target_link_libraries(${target}
   PUBLIC

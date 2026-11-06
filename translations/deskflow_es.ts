@@ -1106,6 +1106,107 @@ Además, verifique que puede %1 el archivo de configuración del servidor: %2</t
         <source>Files not received</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>No updates</source>
+        <extracomment>%1 is the app name, %2 its version
+----------
+%1 is the reason</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You have the latest version of %1 (%2).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not check for updates: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <extracomment>%1 is the reason</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The update could not be downloaded: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check for &amp;Updates...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Include &amp;test builds in updates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Also update to builds made from the latest changes, not only to releases</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Checking for updates...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update available</source>
+        <extracomment>%1 is a version number, %2 the app name</extracomment>
+        <translation type="unfinished">Actualización disponible</translation>
+    </message>
+    <message>
+        <source>Version %1 of %2 is ready to install</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 %2 is available, you have %3.</source>
+        <extracomment>%1 is the app name, %2 the new version, %3 the version in use</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This is a test build made from the latest changes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>It can&apos;t be installed from here, download it from the release page.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 restarts by itself. macOS may ask for Accessibility permission again afterwards.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update now (%1)</source>
+        <extracomment>%1 is a size like &quot;34 MB&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Release page</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloading version %1...</source>
+        <extracomment>%1 is a version number</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starting the installer...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The update was downloaded and verified. Install it from the window that opened, then start %1 again.</source>
+        <extracomment>%1 is the app name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The update could not be installed: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>NewComputerWidget</name>
@@ -2076,6 +2177,41 @@ Al habilitar esta opción, se deshabilitará la interfaz gráfica de usuario (GU
     <message>
         <source>%1 changed while it was being sent</source>
         <extracomment>%1 is a file name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>deskflow::gui::Updater</name>
+    <message>
+        <source>The list of releases could not be read</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not save the update: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The update could not be verified, it has no checksum</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not read the downloaded update</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The downloaded update is damaged, its checksum doesn&apos;t match</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The installer could not be started</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The disk image could not be opened</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This update can&apos;t be installed automatically</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

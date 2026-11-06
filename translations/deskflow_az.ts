@@ -1110,6 +1110,107 @@ Bağlanmış IP artıq keçərsizdir, serveri yenidən başlatmaq lazım ola bil
         <source>Files not received</source>
         <translation>Fayllar alınmadı</translation>
     </message>
+    <message>
+        <source>No updates</source>
+        <extracomment>%1 is the app name, %2 its version
+----------
+%1 is the reason</extracomment>
+        <translation>Yeniləmə yoxdur</translation>
+    </message>
+    <message>
+        <source>You have the latest version of %1 (%2).</source>
+        <translation>%1-un ən son versiyası sizdədir (%2).</translation>
+    </message>
+    <message>
+        <source>Could not check for updates: %1</source>
+        <translation>Yeniləmələri yoxlamaq mümkün olmadı: %1</translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <extracomment>%1 is the reason</extracomment>
+        <translation>Yeniləmə</translation>
+    </message>
+    <message>
+        <source>The update could not be downloaded: %1</source>
+        <translation>Yeniləməni endirmək mümkün olmadı: %1</translation>
+    </message>
+    <message>
+        <source>Check for &amp;Updates...</source>
+        <translation>&amp;Yeniləmələri yoxla...</translation>
+    </message>
+    <message>
+        <source>Include &amp;test builds in updates</source>
+        <translation>Yeniləmələrə &amp;test versiyalarını da daxil et</translation>
+    </message>
+    <message>
+        <source>Also update to builds made from the latest changes, not only to releases</source>
+        <translation>Yalnız buraxılışlara deyil, ən son dəyişikliklərdən yığılan versiyalara da yenilə</translation>
+    </message>
+    <message>
+        <source>Checking for updates...</source>
+        <translation>Yeniləmələr yoxlanılır...</translation>
+    </message>
+    <message>
+        <source>Update available</source>
+        <extracomment>%1 is a version number, %2 the app name</extracomment>
+        <translation>Yeniləmə var</translation>
+    </message>
+    <message>
+        <source>Version %1 of %2 is ready to install</source>
+        <translation>%2-un %1 versiyası quraşdırılmağa hazırdır</translation>
+    </message>
+    <message>
+        <source>%1 %2 is available, you have %3.</source>
+        <extracomment>%1 is the app name, %2 the new version, %3 the version in use</extracomment>
+        <translation>%1 %2 mövcuddur, sizdəki versiya %3.</translation>
+    </message>
+    <message>
+        <source>This is a test build made from the latest changes.</source>
+        <translation>Bu, ən son dəyişikliklərdən yığılmış test versiyasıdır.</translation>
+    </message>
+    <message>
+        <source>It can&apos;t be installed from here, download it from the release page.</source>
+        <translation>Buradan quraşdırmaq olmur, buraxılış səhifəsindən endirin.</translation>
+    </message>
+    <message>
+        <source>%1 restarts by itself. macOS may ask for Accessibility permission again afterwards.</source>
+        <translation>%1 özü yenidən başlayacaq. Bundan sonra macOS Əlçatanlıq icazəsini yenidən istəyə bilər.</translation>
+    </message>
+    <message>
+        <source>Update now (%1)</source>
+        <extracomment>%1 is a size like &quot;34 MB&quot;</extracomment>
+        <translation>İndi yenilə (%1)</translation>
+    </message>
+    <message>
+        <source>Release page</source>
+        <translation>Buraxılış səhifəsi</translation>
+    </message>
+    <message>
+        <source>Later</source>
+        <translation>Sonra</translation>
+    </message>
+    <message>
+        <source>Downloading version %1...</source>
+        <extracomment>%1 is a version number</extracomment>
+        <translation>%1 versiyası endirilir...</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Ləğv et</translation>
+    </message>
+    <message>
+        <source>Starting the installer...</source>
+        <translation>Quraşdırıcı başladılır...</translation>
+    </message>
+    <message>
+        <source>The update was downloaded and verified. Install it from the window that opened, then start %1 again.</source>
+        <extracomment>%1 is the app name</extracomment>
+        <translation>Yeniləmə endirildi və yoxlanıldı. Açılan pəncərədən quraşdırın, sonra %1-u yenidən başladın.</translation>
+    </message>
+    <message>
+        <source>The update could not be installed: %1</source>
+        <translation>Yeniləməni quraşdırmaq mümkün olmadı: %1</translation>
+    </message>
 </context>
 <context>
     <name>NewComputerWidget</name>
@@ -2083,6 +2184,41 @@ Bu ayarı aktiv etmək server konfiqurasiyası interfeysini söndürəcək.</tra
         <source>%1 changed while it was being sent</source>
         <extracomment>%1 is a file name</extracomment>
         <translation>%1 göndərilərkən dəyişdi</translation>
+    </message>
+</context>
+<context>
+    <name>deskflow::gui::Updater</name>
+    <message>
+        <source>The list of releases could not be read</source>
+        <translation>Buraxılışların siyahısı oxunmadı</translation>
+    </message>
+    <message>
+        <source>Could not save the update: %1</source>
+        <translation>Yeniləməni saxlamaq mümkün olmadı: %1</translation>
+    </message>
+    <message>
+        <source>The update could not be verified, it has no checksum</source>
+        <translation>Yeniləmə yoxlanıla bilmədi, onun yoxlama cəmi yoxdur</translation>
+    </message>
+    <message>
+        <source>Could not read the downloaded update</source>
+        <translation>Endirilmiş yeniləmə oxunmadı</translation>
+    </message>
+    <message>
+        <source>The downloaded update is damaged, its checksum doesn&apos;t match</source>
+        <translation>Endirilmiş yeniləmə zədəlidir, yoxlama cəmi uyğun gəlmir</translation>
+    </message>
+    <message>
+        <source>The installer could not be started</source>
+        <translation>Quraşdırıcını başlatmaq mümkün olmadı</translation>
+    </message>
+    <message>
+        <source>The disk image could not be opened</source>
+        <translation>Disk şəklini açmaq mümkün olmadı</translation>
+    </message>
+    <message>
+        <source>This update can&apos;t be installed automatically</source>
+        <translation>Bu yeniləməni avtomatik quraşdırmaq olmur</translation>
     </message>
 </context>
 <context>

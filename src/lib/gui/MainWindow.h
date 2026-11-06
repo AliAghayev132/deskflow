@@ -10,12 +10,12 @@
 #pragma once
 
 #include <QMainWindow>
+#include <QPointer>
 #include <QProcess>
 #include <QRegularExpression>
 #include <QSystemTrayIcon>
 #include <QUrl>
 
-#include "VersionChecker.h"
 #include "config/ServerConfig.h"
 #include "gui/core/CoreProcess.h"
 #include "gui/core/NetworkMonitor.h"
@@ -28,6 +28,7 @@
 class QAction;
 class QMenu;
 class QTimer;
+class QProgressDialog;
 class QDragEnterEvent;
 class QDropEvent;
 class QLocalServer;
@@ -36,6 +37,8 @@ class DeskflowApplication;
 class LogDock;
 namespace deskflow::gui {
 class ClipboardHistory;
+class Updater;
+struct UpdateInfo;
 class FileReceiver;
 class FileSender;
 struct FileOffer;
@@ -112,7 +115,6 @@ private:
 
   void clearSettings();
   void openAboutDialog();
-  void openGetNewVersionUrl() const;
   void openSettings();
   void startCore();
   void stopCore();
@@ -147,6 +149,15 @@ private:
   void showConfigureServer(const QString &message);
   void showConfigureClient();
   void restoreWindow();
+
+  /**
+   * @brief While the log is hidden the window has a fixed size, make it match what is shown now
+   *
+   * Panels appear and disappear (connections, mode options, longer translations), so the
+   * fixed size is updated whenever the layout changes instead of squeezing the contents.
+   */
+  void fitToContents();
+  bool m_fitPending = false;
   void setupControls();
   void showFirstConnectedMessage();
   void updateStatus();
@@ -236,6 +247,15 @@ private:
   void notify(const QString &title, const QString &text, const QString &folder = {});
 
   /**
+   * @param manual show the result even when there is no update
+   */
+  void checkForUpdates(bool manual);
+  void updateAvailable(const deskflow::gui::UpdateInfo &update);
+  /// Explain the update found and offer to install it
+  void showUpdate();
+  void installUpdate(const QString &file);
+
+  /**
    * @brief Runs every few seconds: switches profile when the network changes and reconnects a client after
    * sleep or a network change
    */
@@ -275,7 +295,6 @@ private:
   static constexpr int kSleepGap = 30000;     ///< ms a check may be late before we assume the computer slept
   inline static const auto m_nameRegEx = QRegularExpression(QStringLiteral("^[\\w\\-_\\.]{0,255}$"));
 
-  VersionChecker m_versionChecker;
   bool m_secureSocket = false;
   bool m_saveOnExit = true;
   bool m_clientErrorVisible = false;
@@ -331,6 +350,13 @@ private:
   QAction *m_actionSendFiles = nullptr;
   QHash<int, QString> m_offerSenders;
   QString m_notifiedFolder;
+  deskflow::gui::Updater *m_updater = nullptr;
+  QAction *m_actionCheckUpdates = nullptr;
+  QAction *m_actionTestBuilds = nullptr;
+  QTimer *m_updateTimer = nullptr;
+  std::unique_ptr<deskflow::gui::UpdateInfo> m_update;
+  QPointer<QProgressDialog> m_updateProgress;
+  bool m_manualUpdateCheck = false;
   QString m_currentIpAddress;
 
   // Server IP strategy optimization

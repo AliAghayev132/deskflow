@@ -34,6 +34,7 @@
 #include "gui/core/FileTransfer.h"
 #include "gui/core/PairingCode.h"
 #include "gui/core/ServerDiscovery.h"
+#include "gui/core/Updater.h"
 #include "gui/core/WakeOnLan.h"
 #include "gui/ipc/DaemonIpcClient.h"
 #include "gui/widgets/LogDock.h"
@@ -63,6 +64,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkInterface>
 #include <QPixmap>
+#include <QProgressDialog>
 #include <QPushButton>
 #include <QRegularExpression>
 #include <QRegularExpressionValidator>
@@ -73,6 +75,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <utility>
 
 #if defined(Q_OS_MACOS)
 #include <ApplicationServices/ApplicationServices.h>
@@ -110,7 +113,11 @@ MainWindow::MainWindow()
       m_menuClipboard{new QMenu(this)},
       m_menuWake{new QMenu(this)},
       m_fileReceiver{new FileReceiver(this)},
-      m_actionSendFiles{new QAction(this)}
+      m_actionSendFiles{new QAction(this)},
+      m_updater{new Updater(QUrl(Settings::value(Settings::Gui::UpdateCheckUrl).toString()), this)},
+      m_actionCheckUpdates{new QAction(this)},
+      m_actionTestBuilds{new QAction(this)},
+      m_updateTimer{new QTimer(this)}
 {
   ui->setupUi(this);
 
@@ -184,6 +191,57 @@ MainWindow::MainWindow()
       QDesktopServices::openUrl(QUrl::fromLocalFile(m_notifiedFolder));
   });
   setAcceptDrops(true);
+
+  m_actionCheckUpdates->setMenuRole(QAction::ApplicationSpecificRole);
+  m_actionCheckUpdates->setIcon(QIcon::fromTheme(QStringLiteral("software-updates-release")));
+  connect(m_actionCheckUpdates, &QAction::triggered, this, [this] {
+    if (m_update)
+      showUpdate();
+    else
+      checkForUpdates(true);
+  });
+  m_actionTestBuilds->setCheckable(true);
+  m_actionTestBuilds->setChecked(Settings::value(Settings::Gui::UpdateTestBuilds).toBool());
+  connect(m_actionTestBuilds, &QAction::toggled, this, [this](bool on) {
+    Settings::setValue(Settings::Gui::UpdateTestBuilds, on);
+    m_update.reset();
+    checkForUpdates(false);
+  });
+  connect(m_updater, &Updater::updateAvailable, this, &MainWindow::updateAvailable);
+  connect(m_updater, &Updater::upToDate, this, [this] {
+    m_update.reset();
+    if (!std::exchange(m_manualUpdateCheck, false))
+      return;
+    m_statusBar->clearMessage();
+    //: %1 is the app name, %2 its version
+    QMessageBox::information(
+        this, tr("No updates"), tr("You have the latest version of %1 (%2).").arg(kAppName, kDisplayVersion)
+    );
+  });
+  connect(m_updater, &Updater::checkFailed, this, [this](const QString &error) {
+    if (!std::exchange(m_manualUpdateCheck, false))
+      return;
+    m_statusBar->clearMessage();
+    //: %1 is the reason
+    QMessageBox::warning(this, tr("No updates"), tr("Could not check for updates: %1").arg(error));
+  });
+  connect(m_updater, &Updater::downloadProgress, this, [this](qint64 received, qint64 total) {
+    if (!m_updateProgress)
+      return;
+    // In KiB so large files fit in an int
+    m_updateProgress->setMaximum(static_cast<int>(std::max<qint64>(total / 1024, 1)));
+    m_updateProgress->setValue(static_cast<int>(std::min(received, total) / 1024));
+  });
+  connect(m_updater, &Updater::downloaded, this, &MainWindow::installUpdate);
+  connect(m_updater, &Updater::downloadFailed, this, [this](const QString &error) {
+    if (m_updateProgress)
+      m_updateProgress->close();
+    //: %1 is the reason
+    QMessageBox::warning(this, tr("Update"), tr("The update could not be downloaded: %1").arg(error));
+  });
+  // Look again now and then, the app often runs for days
+  m_updateTimer->setInterval(6 * 60 * 60 * 1000);
+  connect(m_updateTimer, &QTimer::timeout, this, [this] { checkForUpdates(false); });
   connect(m_menuWake, &QMenu::aboutToShow, this, &MainWindow::refreshWakeMenu);
   // macOS builds the tray menu natively, so it needs items before it is first opened
   refreshClipboardMenu();
@@ -243,6 +301,8 @@ void MainWindow::restoreWindow()
     adjustSize();
     windowGeometry = geometry();
   } else {
+    setMinimumSize(0, 0);
+    setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
     setGeometry(windowGeometry);
     // The geometry may have been saved by a version with fewer controls, make sure everything fits
     if (const auto minHeight = minimumSizeHint().height(); height() < minHeight)
@@ -256,7 +316,27 @@ void MainWindow::restoreWindow()
   }
 
   if (!Settings::value(Settings::Gui::LogExpanded).toBool())
-    setFixedSize(size());
+    fitToContents();
+}
+
+void MainWindow::fitToContents()
+{
+  m_fitPending = false;
+  // With the log docked and open the window is resizable and Qt keeps it large enough
+  if (Settings::value(Settings::Gui::LogExpanded).toBool() && !m_logDock->isFloating())
+    return;
+
+  setMinimumSize(0, 0);
+  setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+  const auto minimum = minimumSizeHint();
+  const auto targetWidth = std::max(width(), minimum.width());
+  auto targetHeight = hasHeightForWidth() ? heightForWidth(targetWidth) : -1;
+  if (targetHeight <= 0)
+    targetHeight = sizeHint().height();
+  const QSize target(targetWidth, std::max(targetHeight, minimum.height()));
+  if (target != size())
+    resize(target);
+  setFixedSize(target);
 }
 
 void MainWindow::setupControls()
@@ -284,6 +364,8 @@ void MainWindow::setupControls()
   ui->lineEditName->setValidator(new QRegularExpressionValidator(m_nameRegEx, this));
   ui->lineEditName->setVisible(false);
   ui->lineEditName->installEventFilter(this);
+  // Notices when panels show up or hide, see fitToContents
+  centralWidget()->installEventFilter(this);
 
   if (deskflow::platform::isMac()) {
     ui->rbModeServer->setAttribute(Qt::WA_MacShowFocusRect, false);
@@ -378,8 +460,7 @@ void MainWindow::connectSlots()
   connect(m_logDock->toggleViewAction(), &QAction::toggled, this, &MainWindow::toggleLogVisible);
 
   connect(m_statusBar, &StatusBar::requestShowMyFingerprints, this, &MainWindow::showMyFingerprint);
-  connect(m_statusBar, &StatusBar::requestUpdateVersion, this, &MainWindow::openGetNewVersionUrl);
-  connect(&m_versionChecker, &VersionChecker::updateFound, m_statusBar, &StatusBar::updateFound);
+  connect(m_statusBar, &StatusBar::requestUpdateVersion, this, &MainWindow::showUpdate);
 
   connect(m_guiDupeChecker, &QLocalServer::newConnection, this, &MainWindow::showAndActivate);
 
@@ -538,7 +619,6 @@ void MainWindow::clearSettings()
   m_networkMonitor->stopMonitoring();
 
   disconnect(&m_coreProcess, nullptr, this, nullptr);
-  disconnect(&m_versionChecker, nullptr, this, nullptr);
   disconnect(m_guiDupeChecker, nullptr, this, nullptr);
   disconnect(m_trayIcon, nullptr, this, nullptr);
   disconnect(m_logDock->toggleViewAction(), nullptr, this, nullptr);
@@ -566,11 +646,6 @@ void MainWindow::openAboutDialog()
 {
   AboutDialog about(this);
   about.exec();
-}
-
-void MainWindow::openGetNewVersionUrl() const
-{
-  QDesktopServices::openUrl(QUrl(kUrlDownload));
 }
 
 void MainWindow::openSettings()
@@ -759,7 +834,8 @@ void MainWindow::open()
   }
 
   if (Settings::value(Settings::Gui::AutoUpdateCheck).toBool()) {
-    m_versionChecker.checkLatest();
+    checkForUpdates(false);
+    m_updateTimer->start();
   } else {
     qDebug() << "skipping check for new version, disabled";
   }
@@ -791,6 +867,9 @@ void MainWindow::createMenuBar()
   m_menuHelp->addAction(m_actionAbout);
   m_menuHelp->addAction(m_actionShowHelp);
   m_menuHelp->addAction(m_actionSetupWizard);
+  m_menuHelp->addSeparator();
+  m_menuHelp->addAction(m_actionCheckUpdates);
+  m_menuHelp->addAction(m_actionTestBuilds);
 
   auto menuBar = new QMenuBar(this);
   menuBar->addMenu(m_menuFile);
@@ -1213,6 +1292,14 @@ void MainWindow::changeEvent(QEvent *e)
 
 bool MainWindow::eventFilter(QObject *obj, QEvent *event)
 {
+  if (obj == centralWidget()) {
+    if (event->type() == QEvent::LayoutRequest && !m_fitPending) {
+      m_fitPending = true;
+      QTimer::singleShot(0, this, &MainWindow::fitToContents);
+    }
+    return false;
+  }
+
   if (obj != ui->lineEditName || event->type() != QEvent::KeyPress)
     return false;
   if (const auto keyEvent = static_cast<QKeyEvent *>(event); keyEvent->key() != Qt::Key_Escape)
@@ -1251,6 +1338,9 @@ void MainWindow::updateText()
 
   m_actionShowHelp->setText(tr("View &Help"));
   m_actionSetupWizard->setText(tr("&Setup Wizard..."));
+  m_actionCheckUpdates->setText(tr("Check for &Updates..."));
+  m_actionTestBuilds->setText(tr("Include &test builds in updates"));
+  m_actionTestBuilds->setToolTip(tr("Also update to builds made from the latest changes, not only to releases"));
 
   //: start / restart core shortcut
   m_actionStartCore->setShortcut(QKeySequence(tr("Ctrl+S")));
@@ -1876,6 +1966,130 @@ void MainWindow::notify(const QString &title, const QString &text, const QString
   m_notifiedFolder = folder;
   if (m_trayIcon->isVisible() && QSystemTrayIcon::supportsMessages())
     m_trayIcon->showMessage(title, text, QSystemTrayIcon::Information, 8000);
+}
+
+void MainWindow::checkForUpdates(bool manual)
+{
+  m_manualUpdateCheck = m_manualUpdateCheck || manual;
+  if (manual)
+    m_statusBar->showMessage(tr("Checking for updates..."));
+  m_updater->check(Settings::value(Settings::Gui::UpdateTestBuilds).toBool());
+}
+
+void MainWindow::updateAvailable(const UpdateInfo &update)
+{
+  const bool isNew = !m_update || m_update->version != update.version;
+  m_update = std::make_unique<UpdateInfo>(update);
+  m_statusBar->updateFound(update.version.toString());
+
+  if (std::exchange(m_manualUpdateCheck, false)) {
+    m_statusBar->clearMessage();
+    showUpdate();
+  } else if (isNew) {
+    //: %1 is a version number, %2 the app name
+    notify(tr("Update available"), tr("Version %1 of %2 is ready to install").arg(update.version.toString(), kAppName));
+  }
+}
+
+void MainWindow::showUpdate()
+{
+  if (!m_update) {
+    checkForUpdates(true);
+    return;
+  }
+  if (m_updater->isDownloading()) {
+    if (m_updateProgress)
+      m_updateProgress->raise();
+    return;
+  }
+
+  const auto update = *m_update;
+  QMessageBox box(this);
+  box.setWindowTitle(tr("Update"));
+  box.setIcon(QMessageBox::Information);
+  //: %1 is the app name, %2 the new version, %3 the version in use
+  box.setText(tr("%1 %2 is available, you have %3.").arg(kAppName, update.version.toString(), kDisplayVersion));
+
+  QStringList info;
+  if (update.testBuild)
+    info.append(tr("This is a test build made from the latest changes."));
+  if (!update.canInstall())
+    info.append(tr("It can't be installed from here, download it from the release page."));
+#ifdef Q_OS_MACOS
+  else
+    info.append(tr("%1 restarts by itself. macOS may ask for Accessibility permission again afterwards.").arg(kAppName)
+    );
+#endif
+  box.setInformativeText(info.join(QLatin1Char(' ')));
+  if (!update.notes.trimmed().isEmpty())
+    box.setDetailedText(update.notes.trimmed());
+
+  QAbstractButton *install = nullptr;
+  if (update.canInstall()) {
+    //: %1 is a size like "34 MB"
+    install =
+        box.addButton(tr("Update now (%1)").arg(filetransfer::sizeText(update.assetSize)), QMessageBox::AcceptRole);
+  }
+  auto page = box.addButton(tr("Release page"), QMessageBox::ActionRole);
+  box.addButton(tr("Later"), QMessageBox::RejectRole);
+  if (install)
+    box.setDefaultButton(qobject_cast<QPushButton *>(install));
+  box.exec();
+
+  if (box.clickedButton() == page) {
+    QDesktopServices::openUrl(update.page);
+    return;
+  }
+  if (!install || box.clickedButton() != install)
+    return;
+
+  auto progress = new QProgressDialog(this);
+  progress->setAttribute(Qt::WA_DeleteOnClose);
+  progress->setWindowTitle(tr("Update"));
+  //: %1 is a version number
+  progress->setLabelText(tr("Downloading version %1...").arg(update.version.toString()));
+  progress->setCancelButtonText(tr("Cancel"));
+  progress->setAutoClose(false);
+  progress->setAutoReset(false);
+  progress->setMinimumDuration(0);
+  progress->setRange(0, 0);
+  connect(progress, &QProgressDialog::canceled, m_updater, &Updater::cancelDownload);
+  connect(progress, &QProgressDialog::canceled, progress, &QWidget::close);
+  m_updateProgress = progress;
+  progress->show();
+  m_updater->download(update);
+}
+
+void MainWindow::installUpdate(const QString &file)
+{
+  if (m_updateProgress) {
+    m_updateProgress->setLabelText(tr("Starting the installer..."));
+    m_updateProgress->setCancelButton(nullptr);
+  }
+
+  QString error;
+  const auto result = Updater::install(file, &error);
+  if (m_updateProgress)
+    m_updateProgress->close();
+
+  switch (result) {
+  case Updater::InstallResult::Started:
+    qInfo() << "quitting so the update can be installed";
+    QCoreApplication::quit();
+    return;
+  case Updater::InstallResult::OpenedManual:
+    QMessageBox::information(
+        this, tr("Update"),
+        //: %1 is the app name
+        tr("The update was downloaded and verified. Install it from the window that opened, then start %1 again.")
+            .arg(kAppName)
+    );
+    return;
+  case Updater::InstallResult::Failed:
+    //: %1 is the reason
+    QMessageBox::warning(this, tr("Update"), tr("The update could not be installed: %1").arg(error));
+    return;
+  }
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent *event)

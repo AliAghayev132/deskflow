@@ -35,3 +35,10 @@ create_test(
   SOURCE FileTransferTests.cpp
   WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/gui"
 )
+
+create_test(
+  NAME UpdaterTests
+  DEPENDS gui
+  SOURCE UpdaterTests.cpp
+  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/gui"
+)

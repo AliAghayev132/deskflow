@@ -81,6 +81,7 @@ public:
     inline static const auto AutoStartCore = QStringLiteral("gui/startCoreWithGui");
     inline static const auto AutoUpdateCheck = QStringLiteral("gui/enableUpdateCheck");
     inline static const auto UpdateCheckUrl = QStringLiteral("gui/updateCheckUrl");
+    inline static const auto UpdateTestBuilds = QStringLiteral("gui/updateTestBuilds");
     inline static const auto CloseReminder = QStringLiteral("gui/closeReminder");
     inline static const auto CloseToTray = QStringLiteral("gui/closeToTray");
     inline static const auto LogExpanded = QStringLiteral("gui/logExpanded");
@@ -335,6 +336,7 @@ private:
     , Gui::AutoStartCore
     , Gui::AutoUpdateCheck
     , Gui::UpdateCheckUrl
+    , Gui::UpdateTestBuilds
     , Gui::CloseReminder
     , Gui::CloseToTray
     , Gui::LogExpanded
@@ -408,6 +410,7 @@ private:
     , Gui::LogExpanded
     , Gui::SymbolicTrayIcon
     , Gui::ClipboardHistory
+    , Gui::UpdateTestBuilds
     , Security::TlsEnabled
     , Security::CheckPeers
     , Server::EnableClipboard
