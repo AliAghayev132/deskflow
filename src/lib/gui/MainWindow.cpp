@@ -32,9 +32,11 @@
 #include "gui/core/ClipboardHistory.h"
 #include "gui/core/CoreProcess.h"
 #include "gui/core/FileTransfer.h"
+#include "gui/core/FullScreenDetector.h"
 #include "gui/core/PairingCode.h"
 #include "gui/core/ScreenLock.h"
 #include "gui/core/ServerDiscovery.h"
+#include "gui/core/Tailscale.h"
 #include "gui/core/Updater.h"
 #include "gui/core/WakeOnLan.h"
 #include "gui/ipc/DaemonIpcClient.h"
@@ -126,7 +128,10 @@ MainWindow::MainWindow()
       m_screenLock{new ScreenLock(this)},
       m_actionDimInactive{new QAction(this)},
       m_actionLockTogether{new QAction(this)},
-      m_actionPasteFiles{new QAction(this)}
+      m_actionPasteFiles{new QAction(this)},
+      m_actionGameMode{new QAction(this)},
+      m_gameTimer{new QTimer(this)},
+      m_tailscale{new Tailscale(this)}
 {
   ui->setupUi(this);
 
@@ -214,6 +219,26 @@ MainWindow::MainWindow()
   connect(m_actionLockTogether, &QAction::toggled, this, [](bool on) {
     Settings::setValue(Settings::Gui::LockTogether, on);
   });
+  m_actionGameMode->setCheckable(true);
+  m_actionGameMode->setChecked(Settings::value(Settings::Gui::GameMode).toBool());
+  connect(m_actionGameMode, &QAction::toggled, this, [this](bool on) {
+    Settings::setValue(Settings::Gui::GameMode, on);
+    if (on) {
+      m_gameTimer->start();
+      checkFullScreen();
+    } else {
+      m_gameTimer->stop();
+      m_localFullScreen = false;
+      m_fullScreenClients.clear();
+      updateCursorLock();
+    }
+  });
+  // Often enough to catch a game starting before the cursor drifts off, cheap enough to not matter
+  m_gameTimer->setInterval(1000);
+  connect(m_gameTimer, &QTimer::timeout, this, &MainWindow::checkFullScreen);
+  if (m_actionGameMode->isChecked())
+    m_gameTimer->start();
+
   m_actionPasteFiles->setIcon(QIcon::fromTheme(QStringLiteral("edit-paste")));
   connect(m_actionPasteFiles, &QAction::triggered, this, &MainWindow::pasteRemoteFiles);
   connect(QGuiApplication::clipboard(), &QClipboard::dataChanged, this, &MainWindow::clipboardChanged);
@@ -514,6 +539,14 @@ void MainWindow::connectSlots()
   connect(ui->btnFindServers, &QPushButton::clicked, this, [this] { findServers(); });
   connect(m_discovery, &ServerDiscovery::scanFinished, this, &MainWindow::serversFound);
   connect(m_discovery, &ServerDiscovery::clientSeen, this, &MainWindow::rememberClient);
+  connect(m_tailscale, &Tailscale::peersFound, this, [this](const QList<TailscalePeer> &peers) {
+    QList<QHostAddress> online;
+    for (const auto &peer : peers) {
+      if (peer.online)
+        online.append(peer.address);
+    }
+    m_discovery->queryNow(online);
+  });
   connect(m_discovery, &ServerDiscovery::latencyMeasured, m_connectionsPanel, &ConnectionsPanel::setLatency);
 
   connect(m_actionSetupWizard, &QAction::triggered, this, &MainWindow::showOnboarding);
@@ -903,6 +936,7 @@ void MainWindow::createMenuBar()
   m_menuEdit->addSeparator();
   m_menuEdit->addAction(m_actionDimInactive);
   m_menuEdit->addAction(m_actionLockTogether);
+  m_menuEdit->addAction(m_actionGameMode);
 
   m_menuView->addAction(m_logDock->toggleViewAction());
 
@@ -1028,12 +1062,16 @@ void MainWindow::handleLogLine(const QString &line)
 
   static const QRegularExpression switchPattern(QStringLiteral(R"re(switch from "[^"]*" to "([^"]*)")re"));
   const auto match = switchPattern.match(line);
-  if (match.hasMatch())
-    setActiveHere(match.captured(1) == Settings::value(Settings::Core::ComputerName).toString());
+  if (match.hasMatch()) {
+    m_activeComputer = match.captured(1);
+    setActiveHere(m_activeComputer == Settings::value(Settings::Core::ComputerName).toString());
+  }
 }
 
 void MainWindow::setActiveHere(bool active)
 {
+  m_activeHere = active;
+  updateCursorLock();
   m_dimmer->setDimmed(!active && m_actionDimInactive->isChecked() && m_coreProcess.isStarted());
 }
 
@@ -1224,8 +1262,14 @@ void MainWindow::coreProcessStateChanged(ProcessState state)
   updateLink();
   updateFileReceiver();
   updatePasteAction();
-  if (!m_coreProcess.isStarted())
+  if (!m_coreProcess.isStarted()) {
     m_dimmer->setDimmed(false);
+    // A new core starts with the cursor free
+    m_cursorLocked = false;
+    m_localFullScreen = false;
+    m_fullScreenClients.clear();
+    m_activeHere = true;
+  }
 
   if (state == Stopped || state == Stopping) {
     m_connectionsPanel->clear();
@@ -1395,6 +1439,11 @@ void MainWindow::updateText()
   m_actionDimInactive->setText(tr("&Dim this computer when the cursor is on another"));
   m_actionLockTogether->setText(tr("&Lock all computers together"));
   m_actionLockTogether->setToolTip(tr("When one connected computer is locked, the others lock too"));
+  m_actionGameMode->setText(tr("&Game mode"));
+  m_actionGameMode->setToolTip(
+      tr("While a game or other full screen app is in front, the cursor stays on that computer. "
+         "Turn this on on every computer.")
+  );
   updatePasteAction();
   m_actionSendFiles->setText(tr("Send &files..."));
   m_actionSendFiles->setToolTip(tr("Send files to a connected computer, or drop them on this window"));
@@ -1920,7 +1969,8 @@ void MainWindow::sendFiles(QStringList paths)
 }
 
 void MainWindow::startSending(
-    const QString &name, const QHostAddress &address, const QStringList &paths, bool requested
+    const QString &name, const QHostAddress &address, const QStringList &paths, bool requested,
+    const std::function<void()> &onDone
 )
 {
   auto sender = new FileSender(Settings::value(Settings::Core::ComputerName).toString(), paths, this, requested);
@@ -1930,6 +1980,8 @@ void MainWindow::startSending(
     else
       QMessageBox::warning(this, tr("Send files"), problem);
     sender->deleteLater();
+    if (onDone)
+      onDone();
     return;
   }
 
@@ -1943,8 +1995,10 @@ void MainWindow::startSending(
         tr("Sending files to %1: %2 of %3").arg(name, filetransfer::sizeText(sent), filetransfer::sizeText(total))
     );
   });
-  connect(sender, &FileSender::finished, this, [this, sender, name, requested](bool ok, const QString &error) {
+  connect(sender, &FileSender::finished, this, [this, sender, name, requested, onDone](bool ok, const QString &error) {
     sender->deleteLater();
+    if (onDone)
+      onDone();
     if (ok) {
       //: %1 is a computer name
       const auto text = tr("%n file(s) sent to %1", "", sender->fileCount()).arg(name);
@@ -1968,12 +2022,13 @@ void MainWindow::startSending(
   );
 }
 
-void MainWindow::sendRequest(const QString &type, int count, const QHostAddress &skip)
+void MainWindow::sendRequest(const QString &type, int count, const QHostAddress &skip, const QString &from)
 {
   if (!TlsUtility::isEnabled())
     return;
-  const auto request =
-      filetransfer::encodeRequest(type, Settings::value(Settings::Core::ComputerName).toString(), count);
+  const auto request = filetransfer::encodeRequest(
+      type, from.isEmpty() ? Settings::value(Settings::Core::ComputerName).toString() : from, count
+  );
   const auto config = filetransfer::sslConfiguration(Settings::value(Settings::Security::Certificate).toString());
   const auto targets = fileTargets();
   for (const auto &target : targets) {
@@ -2021,13 +2076,39 @@ QString MainWindow::handlePeerRequest(const PeerRequest &request)
             .arg(from)
     );
     m_notificationAction = [this] { pasteRemoteFiles(); };
+    // Clients only know the server, so it tells the other clients and passes the files on
+    if (m_coreProcess.mode() == CoreMode::Server)
+      sendRequest(filetransfer::kRequestCopied, request.count, request.address, from);
+    return QStringLiteral("done");
+  }
+
+  if (request.type == filetransfer::kRequestGame) {
+    if (request.count > 0)
+      m_fullScreenClients.insert(from);
+    else
+      m_fullScreenClients.remove(from);
+    updateCursorLock();
     return QStringLiteral("done");
   }
 
   if (request.type == filetransfer::kRequestPull) {
-    if (m_copiedFiles.isEmpty())
+    if (!m_copiedFiles.isEmpty()) {
+      startSending(from, request.address, m_copiedFiles, true);
+      return QStringLiteral("accept");
+    }
+
+    // A client asks for files another client copied: fetch them from there and pass them on
+    constexpr qint64 kMaxRelayAge = 30 * 60 * 1000;
+    if (m_coreProcess.mode() != CoreMode::Server || m_remoteCopy.name.isEmpty() ||
+        m_remoteCopy.address == request.address || !m_remoteCopy.age.isValid() ||
+        m_remoteCopy.age.elapsed() > kMaxRelayAge)
       return QStringLiteral("decline");
-    startSending(from, request.address, m_copiedFiles, true);
+
+    m_relayTo = Relay{from, request.address};
+    requestPull(m_remoteCopy.name, m_remoteCopy.address, [this](const QString &answer, const QString &) {
+      if (answer != QLatin1String("accept"))
+        m_relayTo.reset();
+    });
     return QStringLiteral("accept");
   }
 
@@ -2044,8 +2125,7 @@ void MainWindow::clipboardChanged()
   if (data && data->hasUrls()) {
     const auto urls = data->urls();
     for (const auto &url : urls) {
-      // Folders can't be sent yet
-      if (url.isLocalFile() && QFileInfo(url.toLocalFile()).isFile())
+      if (url.isLocalFile() && QFileInfo::exists(url.toLocalFile()))
         files.append(url.toLocalFile());
     }
   }
@@ -2080,20 +2160,11 @@ void MainWindow::pasteRemoteFiles()
     return;
 
   const auto name = m_remoteCopy.name;
-  m_pullFrom = m_remoteCopy.address;
-  m_pullAge.start();
   //: %1 is a computer name
   m_statusBar->showMessage(tr("Asking %1 for the copied files...").arg(name));
-
-  auto message = new PeerMessage(
-      filetransfer::encodeRequest(filetransfer::kRequestPull, Settings::value(Settings::Core::ComputerName).toString()),
-      this
-  );
-  connect(message, &PeerMessage::finished, this, [this, message, name](const QString &answer, const QString &error) {
-    message->deleteLater();
+  requestPull(name, m_remoteCopy.address, [this, name](const QString &answer, const QString &error) {
     if (answer == QLatin1String("accept"))
       return;
-    m_pullFrom.clear();
     if (answer == QLatin1String("decline")) {
       //: %1 is a computer name
       m_statusBar->showMessage(tr("%1 has no copied files any more").arg(name), 10000);
@@ -2102,9 +2173,68 @@ void MainWindow::pasteRemoteFiles()
       m_statusBar->showMessage(tr("Could not get the files from %1: %2").arg(name, error), 15000);
     }
   });
+}
+
+void MainWindow::requestPull(
+    const QString &name, const QHostAddress &address,
+    const std::function<void(const QString &answer, const QString &error)> &done
+)
+{
+  qDebug().noquote() << "asking" << name << "for its copied files";
+  m_pullFrom = address;
+  m_pullAge.start();
+
+  auto message = new PeerMessage(
+      filetransfer::encodeRequest(filetransfer::kRequestPull, Settings::value(Settings::Core::ComputerName).toString()),
+      this
+  );
+  connect(message, &PeerMessage::finished, this, [this, message, done](const QString &answer, const QString &error) {
+    message->deleteLater();
+    if (answer != QLatin1String("accept"))
+      m_pullFrom.clear();
+    if (done)
+      done(answer, error);
+  });
   message->send(
-      m_remoteCopy.address, filetransfer::sslConfiguration(Settings::value(Settings::Security::Certificate).toString()),
+      address, filetransfer::sslConfiguration(Settings::value(Settings::Security::Certificate).toString()),
       [this](const QByteArray &fingerprint) { return isTrustedComputer(fingerprint); }
+  );
+}
+
+void MainWindow::checkFullScreen()
+{
+  if (!m_actionGameMode->isChecked() || !m_coreProcess.isStarted())
+    return;
+
+  const bool fullScreen = isFullScreenAppInFront();
+  if (fullScreen == m_localFullScreen)
+    return;
+  m_localFullScreen = fullScreen;
+  qInfo() << (fullScreen ? "a full screen app is in front" : "the full screen app closed");
+
+  // A client tells the server, which owns the cursor; the server decides by itself
+  if (m_coreProcess.mode() == CoreMode::Client)
+    sendRequest(filetransfer::kRequestGame, fullScreen ? 1 : 0);
+  else
+    updateCursorLock();
+}
+
+void MainWindow::updateCursorLock()
+{
+  if (m_coreProcess.mode() != CoreMode::Server)
+    return;
+
+  const bool game = m_actionGameMode->isChecked() && m_coreProcess.isStarted() &&
+                    ((m_activeHere && m_localFullScreen) || m_fullScreenClients.contains(m_activeComputer));
+  if (game == m_cursorLocked)
+    return;
+  if (!m_coreProcess.setCursorLocked(game))
+    return;
+  m_cursorLocked = game;
+  m_statusBar->showMessage(
+      game ? tr("Game mode: the cursor stays on this computer until the full screen app closes")
+           : tr("Game mode ended, the cursor moves freely again"),
+      8000
   );
 }
 
@@ -2129,11 +2259,22 @@ void MainWindow::fileOffered(int id, const FileOffer &offer)
   const auto from = offer.from.isEmpty() ? offer.address.toString() : offer.from;
   m_offerSenders.insert(id, from);
 
-  // Files this computer asked for a moment ago go straight to the clipboard
-  constexpr qint64 kPullWindow = 60000;
+  // Files this computer asked for go straight to the clipboard, or on to the client that asked the server.
+  // Passing them on through the server can take a while for big files.
+  constexpr qint64 kPullWindow = 10 * 60 * 1000;
   if (offer.requested && !m_pullFrom.isNull() && offer.address == m_pullFrom && m_pullAge.elapsed() < kPullWindow &&
       isTrustedComputer(offer.fingerprint)) {
     m_pullFrom.clear();
+    if (m_relayTo) {
+      const auto folder = QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation))
+                              .filePath(QStringLiteral("%1-relay-%2").arg(kAppId).arg(id));
+      QDir(folder).removeRecursively();
+      m_relayIds.insert(id, *m_relayTo);
+      m_relayFolders.insert(id, folder);
+      m_relayTo.reset();
+      m_fileReceiver->accept(id, folder);
+      return;
+    }
     m_pullIds.insert(id);
     m_fileReceiver->accept(id, downloadsFolder());
     return;
@@ -2197,6 +2338,16 @@ void MainWindow::fileOffered(int id, const FileOffer &offer)
 void MainWindow::filesReceived(int id, bool ok, const QString &error, const QStringList &files)
 {
   const auto from = m_offerSenders.take(id);
+  if (m_relayIds.contains(id)) {
+    const auto relay = m_relayIds.take(id);
+    const auto folder = m_relayFolders.take(id);
+    const auto cleanUp = [folder] { QDir(folder).removeRecursively(); };
+    if (ok)
+      startSending(relay.name, relay.address, files, true, cleanUp);
+    else
+      cleanUp();
+    return;
+  }
   if (m_pullIds.remove(id) && ok) {
     // Put them on the clipboard as files, ready to paste in Explorer, Finder or a file manager
     auto data = new QMimeData;
@@ -2464,7 +2615,14 @@ void MainWindow::findServers(bool automatic)
     ui->btnFindServers->setEnabled(false);
     ui->btnFindServers->setText(tr("Searching..."));
   }
-  m_discovery->scan();
+
+  // Computers on a Tailscale network are asked directly, they can be anywhere
+  if (Tailscale::executable().isEmpty()) {
+    m_discovery->scan();
+    return;
+  }
+  m_discovery->scan(3 * ServerDiscovery::kDefaultScanTime);
+  m_tailscale->lookup();
 }
 
 void MainWindow::serversFound(const QList<DiscoveredServer> &servers)
@@ -2503,7 +2661,11 @@ void MainWindow::serversFound(const QList<DiscoveredServer> &servers)
     for (const auto &server : servers) {
       const auto host = server.host(defaultPort);
       //: %1 is a computer name, %2 its address
-      auto action = menu.addAction(tr("%1  (%2)").arg(server.name, host));
+      auto label = tr("%1  (%2)").arg(server.name, host);
+      if (Tailscale::isTailscaleAddress(server.address))
+        //: Added to a server found through the Tailscale VPN
+        label += tr(", via Tailscale");
+      auto action = menu.addAction(label);
       const auto icon = server.tls ? QStringLiteral("security-high") : QStringLiteral("network-connect");
       action->setIcon(QIcon::fromTheme(icon));
       connect(action, &QAction::triggered, this, [this, host, server] {

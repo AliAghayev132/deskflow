@@ -84,12 +84,12 @@ void FileTransferTests::rejectsBadOffers()
   QVERIFY(!filetransfer::parseOffer(R"({"app":"other","v":1,"type":"offer","files":[{"name":"a","size":1}]})"));
   QVERIFY(!filetransfer::parseOffer(filetransfer::encodeMessage("accept").trimmed()));
 
-  // Names that try to leave the download folder are cut down to the file name
+  // Names that try to leave the download folder lose the parts that climb out
   const auto offer = filetransfer::parseOffer(
       R"({"app":"deskflow","v":1,"type":"offer","files":[{"name":"../../.ssh/authorized_keys","size":1}]})"
   );
   QVERIFY(offer.has_value());
-  QCOMPARE(offer->names.first(), QStringLiteral("authorized_keys"));
+  QCOMPARE(offer->names.first(), QStringLiteral(".ssh/authorized_keys"));
 }
 
 void FileTransferTests::safeFileNames()
@@ -227,13 +227,88 @@ void FileTransferTests::untrustedReceiver()
 
 void FileTransferTests::refusesFolders()
 {
+  // Folders are fine, but one without files has nothing to send
   QTemporaryDir source;
-  FileSender folder("laptop", {source.path()});
-  QVERIFY(!folder.checkFiles().isEmpty());
+  QDir(source.path()).mkpath("empty/inner");
+  FileSender empty("laptop", {source.filePath("empty")});
+  QVERIFY(!empty.checkFiles().isEmpty());
   FileSender none("laptop", {});
   QVERIFY(!none.checkFiles().isEmpty());
   FileSender missing("laptop", {source.filePath("missing.txt")});
   QVERIFY(!missing.checkFiles().isEmpty());
+}
+
+void FileTransferTests::safeRelativePaths()
+{
+  QCOMPARE(filetransfer::safeRelativePath("Photos/2024/a.jpg"), QStringLiteral("Photos/2024/a.jpg"));
+  QCOMPARE(filetransfer::safeRelativePath("Photos\\2024\\a.jpg"), QStringLiteral("Photos/2024/a.jpg"));
+  QCOMPARE(filetransfer::safeRelativePath("../../.ssh/authorized_keys"), QStringLiteral(".ssh/authorized_keys"));
+  QCOMPARE(filetransfer::safeRelativePath("/etc/passwd"), QStringLiteral("etc/passwd"));
+  QCOMPARE(filetransfer::safeRelativePath("C:\\Windows\\a.dll"), QStringLiteral("C_/Windows/a.dll"));
+  QCOMPARE(filetransfer::safeRelativePath("a/./b//c"), QStringLiteral("a/b/c"));
+  QCOMPARE(filetransfer::safeRelativePath("../.."), QStringLiteral("file"));
+  QCOMPARE(filetransfer::safeRelativePath("Folder/CON/x.txt"), QStringLiteral("Folder/_CON/x.txt"));
+}
+
+void FileTransferTests::sendsFolders()
+{
+  QTemporaryDir source;
+  QTemporaryDir target;
+  QTemporaryDir outside;
+  QDir(source.path()).mkpath("Photos/2024/empty");
+  writeFile(source.filePath("Photos/a.jpg"), "a");
+  writeFile(source.filePath("Photos/2024/b.jpg"), "bb");
+  writeFile(source.filePath("Photos/.hidden"), "h");
+  writeFile(source.filePath("note.txt"), "n");
+  // A link pointing out of the folder is not followed
+  writeFile(outside.filePath("secret.txt"), "secret");
+  QFile::link(outside.filePath("secret.txt"), source.filePath("Photos/link.txt"));
+  // "Photos" is already there, the new one becomes "Photos (2)"
+  QDir(target.path()).mkpath("Photos");
+
+  FileSender sender("laptop", {source.filePath("Photos"), source.filePath("note.txt")});
+  QVERIFY2(sender.checkFiles().isEmpty(), qPrintable(sender.checkFiles()));
+  QStringList names = sender.names();
+  names.sort();
+  QCOMPARE(names, (QStringList{"Photos/.hidden", "Photos/2024/b.jpg", "Photos/a.jpg", "note.txt"}));
+
+  FileReceiver receiver;
+  QVERIFY(receiver.listen(filetransfer::sslConfiguration(m_receiverCert), 0));
+  QSignalSpy received(&receiver, &FileReceiver::finished);
+  connect(&receiver, &FileReceiver::offered, this, [&receiver, &target](int id, const FileOffer &) {
+    receiver.accept(id, target.path());
+  });
+  QSignalSpy sent(&sender, &FileSender::finished);
+  sender.start(
+      QHostAddress::LocalHost, filetransfer::sslConfiguration(m_senderCert), [](const QByteArray &) { return true; },
+      receiver.port()
+  );
+  QVERIFY(sent.wait(15000));
+  QVERIFY2(sent.first().at(0).toBool(), qPrintable(sent.first().at(1).toString()));
+  if (received.isEmpty())
+    QVERIFY(received.wait(5000));
+
+  QCOMPARE(readFile(target.filePath("Photos (2)/a.jpg")), QByteArray("a"));
+  QCOMPARE(readFile(target.filePath("Photos (2)/2024/b.jpg")), QByteArray("bb"));
+  QCOMPARE(readFile(target.filePath("Photos (2)/.hidden")), QByteArray("h"));
+  QCOMPARE(readFile(target.filePath("note.txt")), QByteArray("n"));
+  QVERIFY(!QFileInfo::exists(target.filePath("Photos (2)/link.txt")));
+  QVERIFY(QDir(target.filePath("Photos")).isEmpty());
+
+  // The saved items are the top folder and the file, ready to put on the clipboard
+  auto saved = received.first().at(3).toStringList();
+  saved.sort();
+  QCOMPARE(saved, (QStringList{target.filePath("Photos (2)"), target.filePath("note.txt")}));
+}
+
+void FileTransferTests::folderNamesCantEscape()
+{
+  const auto offer = filetransfer::parseOffer(
+      R"({"app":"deskflow","v":1,"type":"offer","files":[{"name":"x/../../../evil.sh","size":1},)"
+      R"({"name":"/abs/path.txt","size":1}]})"
+  );
+  QVERIFY(offer.has_value());
+  QCOMPARE(offer->names, (QStringList{"x/evil.sh", "abs/path.txt"}));
 }
 
 void FileTransferTests::requestRoundTrip()
@@ -246,6 +321,9 @@ void FileTransferTests::requestRoundTrip()
 
   QVERIFY(filetransfer::parseRequest(filetransfer::encodeRequest("lock", "desktop").trimmed()).has_value());
   QVERIFY(filetransfer::parseRequest(filetransfer::encodeRequest("pull", "desktop").trimmed()).has_value());
+  const auto game = filetransfer::parseRequest(filetransfer::encodeRequest("game", "laptop", 1).trimmed());
+  QVERIFY(game.has_value());
+  QCOMPARE(game->count, 1);
   // Offers and unknown types are not requests
   QVERIFY(!filetransfer::parseRequest(filetransfer::encodeOffer("a", {"x"}, {1}).trimmed()));
   QVERIFY(!filetransfer::parseRequest(filetransfer::encodeRequest("format-disk", "a").trimmed()));

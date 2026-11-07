@@ -10,8 +10,10 @@
 
 #include <QDateTime>
 #include <QDebug>
+#include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
+#include <QHash>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -125,7 +127,7 @@ std::optional<PeerRequest> parseRequest(const QByteArray &line)
   if (!object)
     return std::nullopt;
   const auto type = object->value(QStringLiteral("type")).toString();
-  if (type != kRequestCopied && type != kRequestPull && type != kRequestLock)
+  if (type != kRequestCopied && type != kRequestPull && type != kRequestLock && type != kRequestGame)
     return std::nullopt;
 
   PeerRequest request;
@@ -153,7 +155,7 @@ std::optional<FileOffer> parseOffer(const QByteArray &line)
     const auto size = file.value(QStringLiteral("size")).toInteger(-1);
     if (size < 0)
       return std::nullopt;
-    offer.names.append(safeFileName(file.value(QStringLiteral("name")).toString()));
+    offer.names.append(safeRelativePath(file.value(QStringLiteral("name")).toString()));
     offer.sizes.append(size);
   }
   return offer;
@@ -199,6 +201,20 @@ QString safeFileName(const QString &name)
     safe = safe.left(kMaxNameLength - keep) + (keep ? QStringLiteral(".") + suffix : QString());
   }
   return safe;
+}
+
+QString safeRelativePath(const QString &path)
+{
+  static const QRegularExpression separators(QStringLiteral("[/\\\\]"));
+  QStringList parts;
+  const auto raw = path.split(separators, Qt::SkipEmptyParts);
+  for (const auto &part : raw) {
+    const auto trimmed = part.trimmed();
+    if (trimmed.isEmpty() || trimmed == QLatin1String(".") || trimmed == QLatin1String(".."))
+      continue;
+    parts.append(safeFileName(trimmed));
+  }
+  return parts.isEmpty() ? QStringLiteral("file") : parts.join(QLatin1Char('/'));
 }
 
 QString uniquePath(const QDir &dir, const QString &name)
@@ -278,6 +294,10 @@ struct FileReceiver::Incoming
   qint64 received = 0;
   qint64 reported = 0;
   std::unique_ptr<QSaveFile> file;
+  /// What the current file adds to the list of saved items: itself, or its top folder
+  QString currentEntry;
+  /// Top folder names as sent, and the free names they got here
+  QHash<QString, QString> topFolders;
   QStringList saved;
 };
 
@@ -501,7 +521,24 @@ bool FileReceiver::openNextFile(Incoming &in)
   const auto id = in.id;
 
   while (in.fileIndex < in.offer.names.size()) {
-    const auto path = filetransfer::uniquePath(in.dir, in.offer.names.at(in.fileIndex));
+    const auto &name = in.offer.names.at(in.fileIndex);
+    QString path;
+    if (name.contains(QLatin1Char('/'))) {
+      // Files of a folder go into one new folder, "Photos (2)" when "Photos" is already there
+      const auto top = name.section(QLatin1Char('/'), 0, 0);
+      if (!in.topFolders.contains(top))
+        in.topFolders.insert(top, QFileInfo(filetransfer::uniquePath(in.dir, top)).fileName());
+      const auto folder = in.topFolders.value(top);
+      path = in.dir.filePath(folder + QLatin1Char('/') + name.section(QLatin1Char('/'), 1));
+      in.currentEntry = in.dir.filePath(folder);
+      if (!QDir().mkpath(QFileInfo(path).absolutePath())) {
+        fail(id, tr("Could not create the folder %1").arg(QDir::toNativeSeparators(QFileInfo(path).absolutePath())));
+        return false;
+      }
+    } else {
+      path = filetransfer::uniquePath(in.dir, name);
+      in.currentEntry = path;
+    }
     in.file = std::make_unique<QSaveFile>(path);
     if (!in.file->open(QIODevice::WriteOnly)) {
       //: %1 is a file name
@@ -516,7 +553,8 @@ bool FileReceiver::openNextFile(Incoming &in)
       fail(id, tr("Could not save %1").arg(in.offer.names.at(in.fileIndex)));
       return false;
     }
-    in.saved.append(path);
+    if (!in.saved.contains(in.currentEntry))
+      in.saved.append(in.currentEntry);
     in.file.reset();
     ++in.fileIndex;
   }
@@ -548,12 +586,12 @@ void FileReceiver::receive(Incoming &in)
     }
 
     if (in.fileReceived == size) {
-      const auto path = in.file->fileName();
       if (!in.file->commit()) {
         fail(id, tr("Could not save %1").arg(in.offer.names.at(in.fileIndex)));
         return;
       }
-      in.saved.append(path);
+      if (!in.saved.contains(in.currentEntry))
+        in.saved.append(in.currentEntry);
       in.file.reset();
       in.fileReceived = 0;
       ++in.fileIndex;
@@ -612,10 +650,35 @@ FileSender::FileSender(const QString &from, const QStringList &paths, QObject *p
     : QObject(parent),
       m_from{from},
       m_requested{requested},
-      m_paths{paths},
       m_answerTimer{new QTimer(this)}
 {
+  // Folders are sent as the files inside them, named by their place in the folder
   for (const auto &path : paths) {
+    const QFileInfo info(path);
+    if (info.isDir()) {
+      const QDir root(path);
+      const auto folderName = info.fileName().isEmpty() ? QStringLiteral("folder") : info.fileName();
+      // Links are not followed, so nothing outside the folder is sent by accident
+      QDirIterator files(
+          path, QDir::Files | QDir::Hidden | QDir::NoDotAndDotDot | QDir::NoSymLinks, QDirIterator::Subdirectories
+      );
+      qsizetype found = 0;
+      while (files.hasNext()) {
+        const auto file = files.next();
+        m_paths.append(file);
+        m_names.append(folderName + QLatin1Char('/') + root.relativeFilePath(file));
+        ++found;
+      }
+      if (found == 0 && m_problem.isEmpty())
+        //: %1 is a folder name
+        m_problem = tr("%1 has no files to send").arg(folderName);
+    } else {
+      m_paths.append(path);
+      m_names.append(info.fileName());
+    }
+  }
+
+  for (const auto &path : std::as_const(m_paths)) {
     const QFileInfo info(path);
     const auto size = info.isFile() ? info.size() : -1;
     m_sizes.append(size);
@@ -640,6 +703,8 @@ FileSender::~FileSender()
 
 QString FileSender::checkFiles() const
 {
+  if (!m_problem.isEmpty())
+    return m_problem;
   if (m_paths.isEmpty())
     return tr("No files were chosen");
   if (m_paths.size() > filetransfer::kMaxFiles)
@@ -647,9 +712,6 @@ QString FileSender::checkFiles() const
     return tr("Up to %1 files can be sent at once").arg(filetransfer::kMaxFiles);
   for (const auto &path : m_paths) {
     const QFileInfo info(path);
-    if (info.isDir())
-      //: %1 is a folder name
-      return tr("%1 is a folder, only files can be sent").arg(info.fileName());
     if (!info.isFile() || !info.isReadable())
       //: %1 is a file name
       return tr("%1 can't be read").arg(info.fileName());
@@ -704,10 +766,7 @@ void FileSender::encrypted()
     return;
   }
 
-  QStringList names;
-  for (const auto &path : std::as_const(m_paths))
-    names.append(QFileInfo(path).fileName());
-  m_socket->write(filetransfer::encodeOffer(m_from, names, m_sizes, m_requested));
+  m_socket->write(filetransfer::encodeOffer(m_from, m_names, m_sizes, m_requested));
   m_answerTimer->start(filetransfer::kAnswerTimeout);
   Q_EMIT waiting();
 }

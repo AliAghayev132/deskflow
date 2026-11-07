@@ -5,6 +5,7 @@
  */
 
 #include "gui/core/ServerDiscovery.h"
+#include "gui/core/Tailscale.h"
 #include "gui/core/WakeOnLan.h"
 
 #include <QTest>
@@ -31,6 +32,8 @@ private Q_SLOTS:
   void hostPart();
   void linkMeasuresLatency();
   void hiddenServerStillAnswersHello();
+  void parsesTailscaleStatus();
+  void queryNowFindsServer();
 
 private:
   // A port of our own so tests don't clash with a running Deskflow

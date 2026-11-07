@@ -189,3 +189,48 @@ bool lockOSXScreen()
   lockScreen();
   return true;
 }
+
+bool isOSXFullScreenAppInFront()
+{
+  NSRunningApplication *front = [[NSWorkspace sharedWorkspace] frontmostApplication];
+  if (front == nil || front.processIdentifier == [[NSProcessInfo processInfo] processIdentifier])
+    return false;
+  const pid_t frontPid = front.processIdentifier;
+
+  // Every display's bounds, a window matching one of them covers it
+  uint32_t displayCount = 0;
+  CGDirectDisplayID displays[16];
+  if (CGGetActiveDisplayList(16, displays, &displayCount) != kCGErrorSuccess)
+    return false;
+
+  CFArrayRef windows = CGWindowListCopyWindowInfo(
+      kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements, kCGNullWindowID
+  );
+  if (windows == nullptr)
+    return false;
+
+  bool fullScreen = false;
+  for (CFIndex i = 0; i < CFArrayGetCount(windows) && !fullScreen; ++i) {
+    auto window = static_cast<CFDictionaryRef>(CFArrayGetValueAtIndex(windows, i));
+    int pid = 0;
+    int layer = -1;
+    auto pidRef = static_cast<CFNumberRef>(CFDictionaryGetValue(window, kCGWindowOwnerPID));
+    auto layerRef = static_cast<CFNumberRef>(CFDictionaryGetValue(window, kCGWindowLayer));
+    if (pidRef == nullptr || layerRef == nullptr || !CFNumberGetValue(pidRef, kCFNumberIntType, &pid) ||
+        !CFNumberGetValue(layerRef, kCFNumberIntType, &layer) || pid != frontPid || layer != 0)
+      continue;
+
+    CGRect bounds;
+    auto boundsRef = static_cast<CFDictionaryRef>(CFDictionaryGetValue(window, kCGWindowBounds));
+    if (boundsRef == nullptr || !CGRectMakeWithDictionaryRepresentation(boundsRef, &bounds))
+      continue;
+    for (uint32_t d = 0; d < displayCount; ++d) {
+      if (CGRectEqualToRect(bounds, CGDisplayBounds(displays[d]))) {
+        fullScreen = true;
+        break;
+      }
+    }
+  }
+  CFRelease(windows);
+  return fullScreen;
+}

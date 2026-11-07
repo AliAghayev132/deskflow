@@ -292,4 +292,44 @@ void ServerDiscoveryTests::hiddenServerStillAnswersHello()
   QVERIFY(latency.wait(2000));
 }
 
+void ServerDiscoveryTests::parsesTailscaleStatus()
+{
+  using deskflow::gui::Tailscale;
+  const QByteArray status = R"({
+    "Self": {"HostName": "me", "TailscaleIPs": ["100.64.0.1"]},
+    "Peer": {
+      "nodekey:a": {"HostName": "office-pc", "TailscaleIPs": ["fd7a:115c:a1e0::2", "100.101.102.103"], "Online": true},
+      "nodekey:b": {"HostName": "old-laptop", "TailscaleIPs": ["100.90.1.2"], "Online": false},
+      "nodekey:c": {"HostName": "no-ipv4", "TailscaleIPs": ["fd7a:115c:a1e0::3"], "Online": true}
+    }
+  })";
+  const auto peers = Tailscale::parseStatus(status);
+  QCOMPARE(peers.size(), 2);
+  const auto office = std::ranges::find_if(peers, [](const auto &peer) { return peer.name == "office-pc"; });
+  QVERIFY(office != peers.end());
+  QCOMPARE(office->address, QHostAddress("100.101.102.103"));
+  QVERIFY(office->online);
+  QVERIFY(Tailscale::parseStatus("not json").isEmpty());
+
+  QVERIFY(Tailscale::isTailscaleAddress(QHostAddress("100.64.0.1")));
+  QVERIFY(Tailscale::isTailscaleAddress(QHostAddress("100.127.255.254")));
+  QVERIFY(!Tailscale::isTailscaleAddress(QHostAddress("100.128.0.1")));
+  QVERIFY(!Tailscale::isTailscaleAddress(QHostAddress("192.168.1.5")));
+}
+
+void ServerDiscoveryTests::queryNowFindsServer()
+{
+  ServerDiscovery server(nullptr, m_testPort);
+  QVERIFY(server.startResponding("far-away", 24800, true));
+
+  // Nothing local answers, the address only becomes known during the scan, like a Tailscale peer
+  ServerDiscovery client(nullptr, m_testPort);
+  QSignalSpy finished(&client, &ServerDiscovery::scanFinished);
+  client.scan(800);
+  client.queryNow({QHostAddress::LocalHost});
+  QVERIFY(finished.wait(3000));
+  const auto servers = client.servers();
+  QVERIFY(std::ranges::any_of(servers, [](const auto &found) { return found.name == "far-away"; }));
+}
+
 QTEST_MAIN(ServerDiscoveryTests)

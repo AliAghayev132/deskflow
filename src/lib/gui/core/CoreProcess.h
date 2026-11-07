@@ -42,6 +42,12 @@ public:
 
   void start(std::optional<ProcessMode> processMode = std::nullopt);
   void stop(std::optional<ProcessMode> processMode = std::nullopt);
+
+  /**
+   * @brief Ask a running server to keep the cursor on the computer it is on, e.g. for game mode
+   * @return false when the core can't be reached right now
+   */
+  bool setCursorLocked(bool locked);
   void restart();
   void cleanup();
   void applyLogLevel();

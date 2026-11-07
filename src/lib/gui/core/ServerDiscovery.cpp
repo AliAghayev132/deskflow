@@ -482,11 +482,24 @@ QList<QHostAddress> ServerDiscovery::queryTargets() const
     }
   }
 
-  for (const auto &extra : m_extraTargets) {
+  for (const auto &extra : m_extraTargets + m_scanTargets) {
     if (!targets.contains(extra))
       targets.append(extra);
   }
   return targets;
+}
+
+void ServerDiscovery::queryNow(const QList<QHostAddress> &addresses)
+{
+  if (!m_browser)
+    return;
+  const auto query = encodeQuery();
+  for (const auto &address : addresses) {
+    if (m_scanTargets.contains(address))
+      continue;
+    m_scanTargets.append(address);
+    m_browser->writeDatagram(query, address, m_port);
+  }
 }
 
 void ServerDiscovery::scan(int timeoutMs)
@@ -538,8 +551,13 @@ void ServerDiscovery::readAnswers()
       return existing.name == server->name && existing.port == server->port;
     });
     if (known != m_servers.end()) {
-      // Prefer an address other computers can reach too
-      if (known->address.isLoopback() && !server->address.isLoopback())
+      // Prefer an address other computers can reach too, and the local network over a VPN
+      const auto rank = [](const QHostAddress &address) {
+        if (address.isLoopback())
+          return 0;
+        return address.isInSubnet(QHostAddress(QStringLiteral("100.64.0.0")), 10) ? 1 : 2;
+      };
+      if (rank(server->address) > rank(known->address))
         known->address = server->address;
       continue;
     }
@@ -552,6 +570,7 @@ void ServerDiscovery::readAnswers()
 void ServerDiscovery::finishScan()
 {
   m_resendTimer->stop();
+  m_scanTargets.clear();
   if (m_browser) {
     readAnswers();
     m_browser->close();

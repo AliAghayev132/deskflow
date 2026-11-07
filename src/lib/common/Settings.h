@@ -96,6 +96,7 @@ public:
     inline static const auto ClipboardHistory = QStringLiteral("gui/clipboardHistory");
     inline static const auto DimInactive = QStringLiteral("gui/dimInactive");
     inline static const auto LockTogether = QStringLiteral("gui/lockTogether");
+    inline static const auto GameMode = QStringLiteral("gui/gameMode");
   };
   struct Log
   {
@@ -352,6 +353,7 @@ private:
     , Gui::ClipboardHistory
     , Gui::DimInactive
     , Gui::LockTogether
+    , Gui::GameMode
     , Security::Certificate
     , Security::CheckPeers
     , Security::KeySize

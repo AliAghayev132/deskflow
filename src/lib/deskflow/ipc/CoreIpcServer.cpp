@@ -29,7 +29,13 @@ CoreIpcServer &CoreIpcServer::instance()
 
 void CoreIpcServer::processCommand(QLocalSocket *clientSocket, const QString &command, const QStringList &parts)
 {
-  Q_UNUSED(parts)
+  if (command == QStringLiteral("lockCursor")) {
+    const bool locked = parts.size() >= 2 && parts.at(1) == QStringLiteral("on");
+    LOG_DEBUG("core ipc server got lock cursor %s", locked ? "on" : "off");
+    writeToClientSocket(clientSocket, QStringLiteral("ok"));
+    Q_EMIT lockCursorRequested(locked);
+    return;
+  }
   if (command == QStringLiteral("stop")) {
     LOG_DEBUG("core ipc server got stop message");
     writeToClientSocket(clientSocket, QStringLiteral("ok"));

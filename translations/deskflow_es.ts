@@ -1269,6 +1269,27 @@ Además, verifique que puede %1 el archivo de configuración del servidor: %2</t
             <numerusform></numerusform>
         </translation>
     </message>
+    <message>
+        <source>&amp;Game mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>While a game or other full screen app is in front, the cursor stays on that computer. Turn this on on every computer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Game mode: the cursor stays on this computer until the full screen app closes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Game mode ended, the cursor moves freely again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>, via Tailscale</source>
+        <extracomment>Added to a server found through the Tailscale VPN</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>NewComputerWidget</name>
@@ -2207,11 +2228,6 @@ Al habilitar esta opción, se deshabilitará la interfaz gráfica de usuario (GU
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>%1 is a folder, only files can be sent</source>
-        <extracomment>%1 is a folder name</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>%1 can&apos;t be read</source>
         <extracomment>%1 is a file name</extracomment>
         <translation type="unfinished"></translation>
@@ -2239,6 +2255,11 @@ Al habilitar esta opción, se deshabilitará la interfaz gráfica de usuario (GU
     <message>
         <source>%1 changed while it was being sent</source>
         <extracomment>%1 is a file name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 has no files to send</source>
+        <extracomment>%1 is a folder name</extracomment>
         <translation type="unfinished"></translation>
     </message>
 </context>

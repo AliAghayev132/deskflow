@@ -19,6 +19,7 @@
 #include <QUrl>
 
 #include <functional>
+#include <optional>
 
 #include "config/ServerConfig.h"
 #include "gui/core/CoreProcess.h"
@@ -43,6 +44,7 @@ class LogDock;
 namespace deskflow::gui {
 class ClipboardHistory;
 class ScreenLock;
+class Tailscale;
 class Updater;
 struct PeerRequest;
 struct UpdateInfo;
@@ -250,9 +252,17 @@ private:
   void sendFiles(QStringList paths = {});
   bool isTrustedComputer(const QByteArray &fingerprint) const;
   /// Send files to one computer, requested means it asked for the files copied here
-  void startSending(const QString &name, const QHostAddress &address, const QStringList &paths, bool requested);
-  /// Send a short request to every connected computer, except the one at skip
-  void sendRequest(const QString &type, int count = 0, const QHostAddress &skip = {});
+  void startSending(
+      const QString &name, const QHostAddress &address, const QStringList &paths, bool requested,
+      const std::function<void()> &onDone = {}
+  );
+  /// Send a short request to every connected computer, except the one at skip, from is this computer by default
+  void sendRequest(const QString &type, int count = 0, const QHostAddress &skip = {}, const QString &from = {});
+  /// Ask a computer for the files copied there, done gets its answer
+  void requestPull(
+      const QString &name, const QHostAddress &address,
+      const std::function<void(const QString &answer, const QString &error)> &done
+  );
   /// Answers requests from other computers, see FileReceiver::setRequestHandler
   QString handlePeerRequest(const deskflow::gui::PeerRequest &request);
   /// Files were copied here, tell the other computers they can paste them
@@ -263,6 +273,9 @@ private:
   /// Dim this computer's screens while the cursor is on another one
   void setActiveHere(bool active);
   void screenLocked();
+  /// Game mode: notice full screen apps here, and keep the cursor where one is in front
+  void checkFullScreen();
+  void updateCursorLock();
   void fileOffered(int id, const deskflow::gui::FileOffer &offer);
   void filesReceived(int id, bool ok, const QString &error, const QStringList &files);
   void notify(const QString &title, const QString &text, const QString &folder = {});
@@ -377,6 +390,14 @@ private:
   QAction *m_actionDimInactive = nullptr;
   QAction *m_actionLockTogether = nullptr;
   QAction *m_actionPasteFiles = nullptr;
+  QAction *m_actionGameMode = nullptr;
+  deskflow::gui::Tailscale *m_tailscale = nullptr;
+  QTimer *m_gameTimer = nullptr;
+  bool m_localFullScreen = false;
+  bool m_activeHere = true;
+  QString m_activeComputer;
+  QSet<QString> m_fullScreenClients;
+  bool m_cursorLocked = false;
   QStringList m_copiedFiles;
   bool m_settingClipboard = false;
   /// The last computer that said it copied files, and where to ask for them
@@ -390,6 +411,15 @@ private:
   QHostAddress m_pullFrom;
   QElapsedTimer m_pullAge;
   QSet<int> m_pullIds;
+  /// The server passes copied files between two clients through a temporary folder
+  struct Relay
+  {
+    QString name;
+    QHostAddress address;
+  };
+  std::optional<Relay> m_relayTo;
+  QHash<int, Relay> m_relayIds;
+  QHash<int, QString> m_relayFolders;
   deskflow::gui::Updater *m_updater = nullptr;
   QAction *m_actionCheckUpdates = nullptr;
   QAction *m_actionTestBuilds = nullptr;

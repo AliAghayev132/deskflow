@@ -22,6 +22,9 @@ private Q_SLOTS:
   void declinedFiles();
   void untrustedReceiver();
   void refusesFolders();
+  void safeRelativePaths();
+  void sendsFolders();
+  void folderNamesCantEscape();
   void requestRoundTrip();
   void requestGetsAnswer();
   void untrustedRequestFails();

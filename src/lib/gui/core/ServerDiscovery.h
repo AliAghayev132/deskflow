@@ -135,6 +135,11 @@ public:
   void addQueryTarget(const QHostAddress &address);
 
   /**
+   * @brief Also ask these addresses during the running scan, e.g. computers found on a VPN later
+   */
+  void queryNow(const QList<QHostAddress> &addresses);
+
+  /**
    * @brief Keep saying hello to the server this client is connected to
    * @param name this computer's name
    * @param serverHost the text from the "Connect to" box, a name or address, optionally with a port
@@ -224,6 +229,7 @@ private:
   bool m_tls = false;
   QList<DiscoveredServer> m_servers;
   QList<QHostAddress> m_extraTargets;
+  QList<QHostAddress> m_scanTargets;
   bool m_discoverable = true;
 
   // Link between a connected client and its server

@@ -48,12 +48,16 @@ add_library(${target} STATIC
   core/CoreProcess.h
   core/FileTransfer.cpp
   core/FileTransfer.h
+  core/FullScreenDetector.cpp
+  core/FullScreenDetector.h
   core/NetworkMonitor.cpp
   core/PairingCode.cpp
   core/PairingCode.h
   core/ScreenLock.cpp
   core/ScreenLock.h
   core/ServerDiscovery.cpp
+  core/Tailscale.cpp
+  core/Tailscale.h
   core/ServerDiscovery.h
   core/Updater.cpp
   core/Updater.h

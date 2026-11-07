@@ -1273,6 +1273,27 @@ Bağlanmış IP artıq keçərsizdir, serveri yenidən başlatmaq lazım ola bil
             <numerusform>%1 kompüterindən %n fayl yapışdırmağa hazırdır</numerusform>
         </translation>
     </message>
+    <message>
+        <source>&amp;Game mode</source>
+        <translation>&amp;Oyun rejimi</translation>
+    </message>
+    <message>
+        <source>While a game or other full screen app is in front, the cursor stays on that computer. Turn this on on every computer.</source>
+        <translation>Oyun və ya başqa tam ekran proqram önündə olanda siçan həmin kompüterdə qalır. Bunu hər kompüterdə yandırın.</translation>
+    </message>
+    <message>
+        <source>Game mode: the cursor stays on this computer until the full screen app closes</source>
+        <translation>Oyun rejimi: tam ekran proqram bağlanana qədər siçan bu kompüterdə qalır</translation>
+    </message>
+    <message>
+        <source>Game mode ended, the cursor moves freely again</source>
+        <translation>Oyun rejimi bitdi, siçan yenidən sərbəst hərəkət edir</translation>
+    </message>
+    <message>
+        <source>, via Tailscale</source>
+        <extracomment>Added to a server found through the Tailscale VPN</extracomment>
+        <translation>, Tailscale ilə</translation>
+    </message>
 </context>
 <context>
     <name>NewComputerWidget</name>
@@ -2215,7 +2236,7 @@ Bu ayarı aktiv etmək server konfiqurasiyası interfeysini söndürəcək.</tra
     <message>
         <source>%1 is a folder, only files can be sent</source>
         <extracomment>%1 is a folder name</extracomment>
-        <translation>%1 qovluqdur, yalnız fayl göndərmək olar</translation>
+        <translation type="vanished">%1 qovluqdur, yalnız fayl göndərmək olar</translation>
     </message>
     <message>
         <source>%1 can&apos;t be read</source>
@@ -2246,6 +2267,11 @@ Bu ayarı aktiv etmək server konfiqurasiyası interfeysini söndürəcək.</tra
         <source>%1 changed while it was being sent</source>
         <extracomment>%1 is a file name</extracomment>
         <translation>%1 göndərilərkən dəyişdi</translation>
+    </message>
+    <message>
+        <source>%1 has no files to send</source>
+        <extracomment>%1 is a folder name</extracomment>
+        <translation>%1 qovluğunda göndəriləcək fayl yoxdur</translation>
     </message>
 </context>
 <context>

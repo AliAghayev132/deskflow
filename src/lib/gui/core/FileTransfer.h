@@ -70,11 +70,12 @@ struct PeerRequest
  *   {"type":"copied","from":"laptop","count":3}  files were copied there, they can be pulled
  *   {"type":"pull","from":"desktop"}             please send the files you copied, as a "requested" offer
  *   {"type":"lock","from":"desktop"}             that computer was locked, lock this one too
+ *   {"type":"game","from":"laptop","count":1}    a full screen app is in front there (0 when it closed)
  */
 namespace filetransfer {
 inline constexpr quint16 kPort = 24803;
-inline constexpr int kMaxFiles = 1000;
-inline constexpr qsizetype kMaxLine = 256 * 1024;
+inline constexpr int kMaxFiles = 10000;
+inline constexpr qsizetype kMaxLine = 4 * 1024 * 1024;
 /// How long the person on the other computer has to answer
 inline constexpr int kAnswerTimeout = 120000;
 /// Data is written in pieces of this size so big files don't end up in memory
@@ -83,6 +84,8 @@ inline constexpr qint64 kChunkSize = 256 * 1024;
 inline const QString kRequestCopied = QStringLiteral("copied");
 inline const QString kRequestPull = QStringLiteral("pull");
 inline const QString kRequestLock = QStringLiteral("lock");
+/// A full screen app opened (count 1) or closed (count 0) there, see game mode
+inline const QString kRequestGame = QStringLiteral("game");
 
 QByteArray
 encodeOffer(const QString &from, const QStringList &names, const QList<qint64> &sizes, bool requested = false);
@@ -97,6 +100,13 @@ QString messageType(const QByteArray &line);
  * @brief A name that is safe to create in the download folder: no folders, no reserved names
  */
 QString safeFileName(const QString &name);
+
+/**
+ * @brief A relative path that stays inside the download folder, e.g. "Photos/2024/a.jpg".
+ *
+ * Every part is made safe like a file name, and parts like ".." or "/" are dropped.
+ */
+QString safeRelativePath(const QString &path);
 
 /**
  * @brief A path in dir for name that doesn't exist yet, "report (2).pdf" if "report.pdf" does
@@ -200,6 +210,11 @@ public:
   {
     return static_cast<int>(m_paths.size());
   }
+  /// Names as sent, folders included, e.g. "Photos/2024/a.jpg"
+  [[nodiscard]] const QStringList &names() const
+  {
+    return m_names;
+  }
 
   /**
    * @param trusted decides whether the receiving computer's certificate is one we know
@@ -225,6 +240,8 @@ private:
   QString m_from;
   bool m_requested = false;
   QStringList m_paths;
+  QStringList m_names;
+  QString m_problem;
   QList<qint64> m_sizes;
   qint64 m_total = 0;
   qint64 m_sent = 0;

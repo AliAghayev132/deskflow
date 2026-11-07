@@ -16,6 +16,7 @@
 #include "deskflow/ClientApp.h"
 #include "deskflow/ServerApp.h"
 #include "deskflow/ipc/CoreIpcServer.h"
+#include "server/Server.h"
 
 #if defined(Q_OS_WIN)
 #include "arch/win32/ArchMiscWindows.h"
@@ -124,6 +125,17 @@ int main(int argc, char **argv)
   const auto ipcServer = new deskflow::core::ipc::CoreIpcServer(&app); // NOSONAR - Qt managed
   QObject::connect(
       ipcServer, &deskflow::core::ipc::IpcServer::stopProcessRequested, coreApp, &App::quit, Qt::DirectConnection
+  );
+  QObject::connect(
+      ipcServer, &deskflow::core::ipc::CoreIpcServer::lockCursorRequested, coreApp,
+      [&events](bool locked) {
+        // Queued on the core's own event queue, the server handles it on its thread
+        using Info = Server::LockCursorToComputerInfo;
+        auto *info = new Info(locked ? Info::kOn : Info::kOff);
+        // As a data object, so the queue deletes it with delete
+        events.addEvent(Event(EventTypes::ServerLockCursorToComputer, events.getSystemTarget(), info));
+      },
+      Qt::DirectConnection
   );
   ipcServer->listen();
 

@@ -1266,6 +1266,27 @@ Bağlı bir IP artık geçersiz, sunucuyu yeniden başlatmanız gerekebilir.</tr
             <numerusform>%1 bilgisayarından %n dosya yapıştırmaya hazır</numerusform>
         </translation>
     </message>
+    <message>
+        <source>&amp;Game mode</source>
+        <translation>&amp;Oyun modu</translation>
+    </message>
+    <message>
+        <source>While a game or other full screen app is in front, the cursor stays on that computer. Turn this on on every computer.</source>
+        <translation>Bir oyun veya başka bir tam ekran uygulama öndeyken imleç o bilgisayarda kalır. Bunu her bilgisayarda açın.</translation>
+    </message>
+    <message>
+        <source>Game mode: the cursor stays on this computer until the full screen app closes</source>
+        <translation>Oyun modu: tam ekran uygulama kapanana kadar imleç bu bilgisayarda kalır</translation>
+    </message>
+    <message>
+        <source>Game mode ended, the cursor moves freely again</source>
+        <translation>Oyun modu bitti, imleç yeniden serbestçe hareket ediyor</translation>
+    </message>
+    <message>
+        <source>, via Tailscale</source>
+        <extracomment>Added to a server found through the Tailscale VPN</extracomment>
+        <translation>, Tailscale üzerinden</translation>
+    </message>
 </context>
 <context>
     <name>NewComputerWidget</name>
@@ -2206,7 +2227,7 @@ Bu ayarı etkinleştirmek sunucu yapılandırma arayüzünü devre dışı bıra
     <message>
         <source>%1 is a folder, only files can be sent</source>
         <extracomment>%1 is a folder name</extracomment>
-        <translation>%1 bir klasör, yalnızca dosya gönderilebilir</translation>
+        <translation type="vanished">%1 bir klasör, yalnızca dosya gönderilebilir</translation>
     </message>
     <message>
         <source>%1 can&apos;t be read</source>
@@ -2237,6 +2258,11 @@ Bu ayarı etkinleştirmek sunucu yapılandırma arayüzünü devre dışı bıra
         <source>%1 changed while it was being sent</source>
         <extracomment>%1 is a file name</extracomment>
         <translation>%1 gönderilirken değişti</translation>
+    </message>
+    <message>
+        <source>%1 has no files to send</source>
+        <extracomment>%1 is a folder name</extracomment>
+        <translation>%1 klasöründe gönderilecek dosya yok</translation>
     </message>
 </context>
 <context>
