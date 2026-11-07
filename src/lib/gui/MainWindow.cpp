@@ -243,15 +243,16 @@ MainWindow::MainWindow()
   m_updateTimer->setInterval(6 * 60 * 60 * 1000);
   connect(m_updateTimer, &QTimer::timeout, this, [this] { checkForUpdates(false); });
   connect(m_menuWake, &QMenu::aboutToShow, this, &MainWindow::refreshWakeMenu);
-  // macOS builds the tray menu natively, so it needs items before it is first opened
-  refreshClipboardMenu();
-  refreshWakeMenu();
 
   createMenuBar();
   setupControls();
   updateText();
   connectSlots();
   setupTrayIcon();
+  // macOS builds the tray menu natively, so it needs items before it is first opened.
+  // Only now, the menus look at widgets that setupControls creates.
+  refreshClipboardMenu();
+  refreshWakeMenu();
   updateComputerName();
   setHelpFilePath();
 
@@ -284,6 +285,13 @@ MainWindow::MainWindow()
 }
 MainWindow::~MainWindow()
 {
+  // Closing the window while it is destroyed hides the log dock, which must no longer
+  // reach this half destroyed window
+  if (m_logDock)
+    disconnect(m_logDock->toggleViewAction(), nullptr, this, nullptr);
+  m_menuClipboard->disconnect(this);
+  m_menuWake->disconnect(this);
+
   // Stop network monitoring
   if (m_networkMonitor) {
     m_networkMonitor->stopMonitoring();
@@ -2153,7 +2161,7 @@ void MainWindow::refreshWakeMenu()
     return;
   }
 
-  const auto connected = m_connectionsPanel->connectedNames();
+  const auto connected = m_connectionsPanel ? m_connectionsPanel->connectedNames() : QStringList();
   for (const auto &[name, mac] : std::as_const(targets)) {
     const bool online = connected.contains(name);
     //: %1 is a computer name
