@@ -16,6 +16,8 @@
 using deskflow::gui::FileOffer;
 using deskflow::gui::FileReceiver;
 using deskflow::gui::FileSender;
+using deskflow::gui::PeerMessage;
+using deskflow::gui::PeerRequest;
 namespace filetransfer = deskflow::gui::filetransfer;
 
 namespace {
@@ -232,6 +234,72 @@ void FileTransferTests::refusesFolders()
   QVERIFY(!none.checkFiles().isEmpty());
   FileSender missing("laptop", {source.filePath("missing.txt")});
   QVERIFY(!missing.checkFiles().isEmpty());
+}
+
+void FileTransferTests::requestRoundTrip()
+{
+  const auto copied = filetransfer::parseRequest(filetransfer::encodeRequest("copied", "laptop", 3).trimmed());
+  QVERIFY(copied.has_value());
+  QCOMPARE(copied->type, QStringLiteral("copied"));
+  QCOMPARE(copied->from, QStringLiteral("laptop"));
+  QCOMPARE(copied->count, 3);
+
+  QVERIFY(filetransfer::parseRequest(filetransfer::encodeRequest("lock", "desktop").trimmed()).has_value());
+  QVERIFY(filetransfer::parseRequest(filetransfer::encodeRequest("pull", "desktop").trimmed()).has_value());
+  // Offers and unknown types are not requests
+  QVERIFY(!filetransfer::parseRequest(filetransfer::encodeOffer("a", {"x"}, {1}).trimmed()));
+  QVERIFY(!filetransfer::parseRequest(filetransfer::encodeRequest("format-disk", "a").trimmed()));
+
+  const auto offer = filetransfer::parseOffer(filetransfer::encodeOffer("a", {"x"}, {1}, true).trimmed());
+  QVERIFY(offer && offer->requested);
+  QVERIFY(!filetransfer::parseOffer(filetransfer::encodeOffer("a", {"x"}, {1}).trimmed())->requested);
+}
+
+void FileTransferTests::requestGetsAnswer()
+{
+  FileReceiver receiver;
+  QVERIFY(receiver.listen(filetransfer::sslConfiguration(m_receiverCert), 0));
+  QList<PeerRequest> seen;
+  receiver.setRequestHandler([&seen](const PeerRequest &request) {
+    seen.append(request);
+    return QStringLiteral("accept");
+  });
+
+  PeerMessage message(filetransfer::encodeRequest("lock", "desktop"));
+  QSignalSpy finished(&message, &PeerMessage::finished);
+  message.send(
+      QHostAddress::LocalHost, filetransfer::sslConfiguration(m_senderCert), [](const QByteArray &) { return true; },
+      receiver.port()
+  );
+  QVERIFY(finished.wait(15000));
+  QCOMPARE(finished.first().at(0).toString(), QStringLiteral("accept"));
+  QCOMPARE(seen.size(), 1);
+  QCOMPARE(seen.first().type, QStringLiteral("lock"));
+  QCOMPARE(seen.first().from, QStringLiteral("desktop"));
+  // The receiver knows who asked, so it can ignore computers it doesn't trust
+  QCOMPARE(seen.first().fingerprint, fingerprintOf(m_senderCert));
+}
+
+void FileTransferTests::untrustedRequestFails()
+{
+  FileReceiver receiver;
+  QVERIFY(receiver.listen(filetransfer::sslConfiguration(m_receiverCert), 0));
+  int handled = 0;
+  receiver.setRequestHandler([&handled](const PeerRequest &) {
+    ++handled;
+    return QString();
+  });
+
+  PeerMessage message(filetransfer::encodeRequest("lock", "desktop"));
+  QSignalSpy finished(&message, &PeerMessage::finished);
+  message.send(
+      QHostAddress::LocalHost, filetransfer::sslConfiguration(m_senderCert), [](const QByteArray &) { return false; },
+      receiver.port()
+  );
+  QVERIFY(finished.wait(15000));
+  QVERIFY(finished.first().at(0).toString().isEmpty());
+  QTest::qWait(200);
+  QCOMPARE(handled, 0);
 }
 
 QTEST_MAIN(FileTransferTests)

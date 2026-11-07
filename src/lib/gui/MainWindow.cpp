@@ -33,6 +33,7 @@
 #include "gui/core/CoreProcess.h"
 #include "gui/core/FileTransfer.h"
 #include "gui/core/PairingCode.h"
+#include "gui/core/ScreenLock.h"
 #include "gui/core/ServerDiscovery.h"
 #include "gui/core/Updater.h"
 #include "gui/core/WakeOnLan.h"
@@ -41,10 +42,12 @@
 #include "net/FingerprintDatabase.h"
 #include "widgets/ConnectionsPanel.h"
 #include "widgets/ProfileBar.h"
+#include "widgets/ScreenDimmer.h"
 #include "widgets/StatusBar.h"
 
 #include <QActionGroup>
 #include <QCheckBox>
+#include <QClipboard>
 #include <QCloseEvent>
 #include <QComboBox>
 #include <QDateTime>
@@ -52,6 +55,7 @@
 #include <QDragEnterEvent>
 #include <QDropEvent>
 #include <QFileDialog>
+#include <QFileInfo>
 #include <QGuiApplication>
 #include <QInputDialog>
 #include <QLocalServer>
@@ -117,7 +121,12 @@ MainWindow::MainWindow()
       m_updater{new Updater(QUrl(Settings::value(Settings::Gui::UpdateCheckUrl).toString()), this)},
       m_actionCheckUpdates{new QAction(this)},
       m_actionTestBuilds{new QAction(this)},
-      m_updateTimer{new QTimer(this)}
+      m_updateTimer{new QTimer(this)},
+      m_dimmer{new ScreenDimmer(this)},
+      m_screenLock{new ScreenLock(this)},
+      m_actionDimInactive{new QAction(this)},
+      m_actionLockTogether{new QAction(this)},
+      m_actionPasteFiles{new QAction(this)}
 {
   ui->setupUi(this);
 
@@ -187,9 +196,29 @@ MainWindow::MainWindow()
     );
   });
   connect(m_trayIcon, &QSystemTrayIcon::messageClicked, this, [this] {
-    if (!m_notifiedFolder.isEmpty())
+    if (m_notificationAction)
+      m_notificationAction();
+    else if (!m_notifiedFolder.isEmpty())
       QDesktopServices::openUrl(QUrl::fromLocalFile(m_notifiedFolder));
   });
+
+  m_actionDimInactive->setCheckable(true);
+  m_actionDimInactive->setChecked(Settings::value(Settings::Gui::DimInactive).toBool());
+  connect(m_actionDimInactive, &QAction::toggled, this, [this](bool on) {
+    Settings::setValue(Settings::Gui::DimInactive, on);
+    if (!on)
+      m_dimmer->setDimmed(false);
+  });
+  m_actionLockTogether->setCheckable(true);
+  m_actionLockTogether->setChecked(Settings::value(Settings::Gui::LockTogether).toBool());
+  connect(m_actionLockTogether, &QAction::toggled, this, [](bool on) {
+    Settings::setValue(Settings::Gui::LockTogether, on);
+  });
+  m_actionPasteFiles->setIcon(QIcon::fromTheme(QStringLiteral("edit-paste")));
+  connect(m_actionPasteFiles, &QAction::triggered, this, &MainWindow::pasteRemoteFiles);
+  connect(QGuiApplication::clipboard(), &QClipboard::dataChanged, this, &MainWindow::clipboardChanged);
+  connect(m_screenLock, &ScreenLock::locked, this, &MainWindow::screenLocked);
+  m_fileReceiver->setRequestHandler([this](const PeerRequest &request) { return handlePeerRequest(request); });
   setAcceptDrops(true);
 
   m_actionCheckUpdates->setMenuRole(QAction::ApplicationSpecificRole);
@@ -253,6 +282,7 @@ MainWindow::MainWindow()
   // Only now, the menus look at widgets that setupControls creates.
   refreshClipboardMenu();
   refreshWakeMenu();
+  m_screenLock->watch(static_cast<quintptr>(winId()));
   updateComputerName();
   setHelpFilePath();
 
@@ -868,7 +898,11 @@ void MainWindow::createMenuBar()
 
   m_menuEdit->addAction(m_actionSettings);
   m_menuEdit->addSeparator();
+  m_menuEdit->addAction(m_actionPasteFiles);
   m_menuEdit->addMenu(m_menuClipboard);
+  m_menuEdit->addSeparator();
+  m_menuEdit->addAction(m_actionDimInactive);
+  m_menuEdit->addAction(m_actionLockTogether);
 
   m_menuView->addAction(m_logDock->toggleViewAction());
 
@@ -898,6 +932,7 @@ void MainWindow::setupTrayIcon()
   trayMenu->insertMenu(m_actionMinimize, m_menuProfiles);
   trayMenu->insertMenu(m_actionMinimize, m_menuClipboard);
   trayMenu->insertAction(m_actionMinimize, m_actionSendFiles);
+  trayMenu->insertAction(m_actionMinimize, m_actionPasteFiles);
   trayMenu->insertMenu(m_actionMinimize, m_menuWake);
   trayMenu->insertSeparator(m_actionMinimize);
   trayMenu->insertSeparator(m_actionTrayQuit);
@@ -981,6 +1016,25 @@ void MainWindow::setTrayIcon()
 void MainWindow::handleLogLine(const QString &line)
 {
   m_logDock->appendLine(line);
+
+  // Where the cursor is, to dim the computer not in use
+  if (m_coreProcess.mode() == CoreMode::Client) {
+    if (line.contains(QLatin1String("cursor entered this screen")))
+      setActiveHere(true);
+    else if (line.contains(QLatin1String("cursor left this screen")))
+      setActiveHere(false);
+    return;
+  }
+
+  static const QRegularExpression switchPattern(QStringLiteral(R"re(switch from "[^"]*" to "([^"]*)")re"));
+  const auto match = switchPattern.match(line);
+  if (match.hasMatch())
+    setActiveHere(match.captured(1) == Settings::value(Settings::Core::ComputerName).toString());
+}
+
+void MainWindow::setActiveHere(bool active)
+{
+  m_dimmer->setDimmed(!active && m_actionDimInactive->isChecked() && m_coreProcess.isStarted());
 }
 
 void MainWindow::handleUnrecognisedClient(const QString &clientName)
@@ -1169,6 +1223,9 @@ void MainWindow::coreProcessStateChanged(ProcessState state)
   updateDiscovery();
   updateLink();
   updateFileReceiver();
+  updatePasteAction();
+  if (!m_coreProcess.isStarted())
+    m_dimmer->setDimmed(false);
 
   if (state == Stopped || state == Stopping) {
     m_connectionsPanel->clear();
@@ -1223,6 +1280,12 @@ void MainWindow::coreConnectionStateChanged(ConnectionState state)
   if (m_coreProcess.mode() == CoreMode::Client && m_coreProcess.isStarted())
     m_connectionsPanel->showClient(state, ui->cbHostname->currentText());
   updateLink();
+  // A client that just connected starts without the cursor, anything else is not dimmed
+  if (m_coreProcess.mode() == CoreMode::Client && state == ConnectionState::Connected)
+    setActiveHere(false);
+  else if (state != ConnectionState::Connected)
+    m_dimmer->setDimmed(false);
+  updatePasteAction();
   m_actionSendFiles->setEnabled(TlsUtility::isEnabled() && m_coreProcess.isStarted());
 
   // always assume connection is not secure when connection changes
@@ -1329,6 +1392,10 @@ void MainWindow::updateText()
   m_menuProfiles->setTitle(tr("&Profiles"));
   m_menuClipboard->setTitle(tr("&Clipboard history"));
   m_menuWake->setTitle(tr("&Wake up"));
+  m_actionDimInactive->setText(tr("&Dim this computer when the cursor is on another"));
+  m_actionLockTogether->setText(tr("&Lock all computers together"));
+  m_actionLockTogether->setToolTip(tr("When one connected computer is locked, the others lock too"));
+  updatePasteAction();
   m_actionSendFiles->setText(tr("Send &files..."));
   m_actionSendFiles->setToolTip(tr("Send files to a connected computer, or drop them on this window"));
 
@@ -1849,14 +1916,23 @@ void MainWindow::sendFiles(QStringList paths)
       return;
   }
 
-  auto sender = new FileSender(Settings::value(Settings::Core::ComputerName).toString(), paths, this);
+  startSending(target.first, target.second, paths, false);
+}
+
+void MainWindow::startSending(
+    const QString &name, const QHostAddress &address, const QStringList &paths, bool requested
+)
+{
+  auto sender = new FileSender(Settings::value(Settings::Core::ComputerName).toString(), paths, this, requested);
   if (const auto problem = sender->checkFiles(); !problem.isEmpty()) {
-    QMessageBox::warning(this, title, problem);
+    if (requested)
+      m_statusBar->showMessage(problem, 10000);
+    else
+      QMessageBox::warning(this, tr("Send files"), problem);
     sender->deleteLater();
     return;
   }
 
-  const auto name = target.first;
   connect(sender, &FileSender::waiting, this, [this, name] {
     //: %1 is a computer name
     m_statusBar->showMessage(tr("Waiting for %1 to accept the files...").arg(name));
@@ -1867,13 +1943,15 @@ void MainWindow::sendFiles(QStringList paths)
         tr("Sending files to %1: %2 of %3").arg(name, filetransfer::sizeText(sent), filetransfer::sizeText(total))
     );
   });
-  connect(sender, &FileSender::finished, this, [this, sender, name](bool ok, const QString &error) {
+  connect(sender, &FileSender::finished, this, [this, sender, name, requested](bool ok, const QString &error) {
     sender->deleteLater();
     if (ok) {
       //: %1 is a computer name
       const auto text = tr("%n file(s) sent to %1", "", sender->fileCount()).arg(name);
       m_statusBar->showMessage(text, 10000);
-      notify(tr("Files sent"), text);
+      // The person who asked for them is at the other computer
+      if (!requested)
+        notify(tr("Files sent"), text);
     } else {
       //: %1 is a computer name, %2 the reason
       const auto text = tr("Could not send files to %1: %2").arg(name, error);
@@ -1885,15 +1963,181 @@ void MainWindow::sendFiles(QStringList paths)
   //: %1 is a computer name
   m_statusBar->showMessage(tr("Connecting to %1...").arg(name));
   sender->start(
-      target.second, filetransfer::sslConfiguration(Settings::value(Settings::Security::Certificate).toString()),
+      address, filetransfer::sslConfiguration(Settings::value(Settings::Security::Certificate).toString()),
       [this](const QByteArray &fingerprint) { return isTrustedComputer(fingerprint); }
   );
 }
+
+void MainWindow::sendRequest(const QString &type, int count, const QHostAddress &skip)
+{
+  if (!TlsUtility::isEnabled())
+    return;
+  const auto request =
+      filetransfer::encodeRequest(type, Settings::value(Settings::Core::ComputerName).toString(), count);
+  const auto config = filetransfer::sslConfiguration(Settings::value(Settings::Security::Certificate).toString());
+  const auto targets = fileTargets();
+  for (const auto &target : targets) {
+    if (target.second == skip)
+      continue;
+    auto message = new PeerMessage(request, this);
+    connect(message, &PeerMessage::finished, message, &QObject::deleteLater);
+    message->send(target.second, config, [this](const QByteArray &fingerprint) {
+      return isTrustedComputer(fingerprint);
+    });
+  }
+}
+
+QString MainWindow::handlePeerRequest(const PeerRequest &request)
+{
+  // Only computers already accepted for keyboard and mouse sharing may ask anything
+  if (!isTrustedComputer(request.fingerprint)) {
+    qWarning().noquote() << "ignored a request from an unknown computer at" << request.address.toString();
+    return QStringLiteral("decline");
+  }
+  const auto from = request.from.isEmpty() ? request.address.toString() : request.from;
+
+  if (request.type == filetransfer::kRequestLock) {
+    if (!m_actionLockTogether->isChecked())
+      return QStringLiteral("decline");
+    qInfo().noquote() << from << "was locked, locking this computer too";
+    m_screenLock->lock();
+    // The server passes it on, so every client locks and not only the server
+    if (m_coreProcess.mode() == CoreMode::Server)
+      sendRequest(filetransfer::kRequestLock, 0, request.address);
+    return QStringLiteral("accept");
+  }
+
+  if (request.type == filetransfer::kRequestCopied) {
+    m_remoteCopy.name = from;
+    m_remoteCopy.address = request.address;
+    m_remoteCopy.count = request.count;
+    m_remoteCopy.age.start();
+    updatePasteAction();
+    notify(
+        //: %1 is a computer name
+        tr("Files copied on %1").arg(from),
+        //: %1 is a computer name
+        tr("%n file(s) can be pasted here. Click here or use Edit > Paste files copied on %1.", "", request.count)
+            .arg(from)
+    );
+    m_notificationAction = [this] { pasteRemoteFiles(); };
+    return QStringLiteral("done");
+  }
+
+  if (request.type == filetransfer::kRequestPull) {
+    if (m_copiedFiles.isEmpty())
+      return QStringLiteral("decline");
+    startSending(from, request.address, m_copiedFiles, true);
+    return QStringLiteral("accept");
+  }
+
+  return QStringLiteral("decline");
+}
+
+void MainWindow::clipboardChanged()
+{
+  if (m_settingClipboard)
+    return;
+
+  const auto data = QGuiApplication::clipboard()->mimeData(QClipboard::Clipboard);
+  QStringList files;
+  if (data && data->hasUrls()) {
+    const auto urls = data->urls();
+    for (const auto &url : urls) {
+      // Folders can't be sent yet
+      if (url.isLocalFile() && QFileInfo(url.toLocalFile()).isFile())
+        files.append(url.toLocalFile());
+    }
+  }
+
+  if (files == m_copiedFiles)
+    return;
+  m_copiedFiles = files;
+  if (!files.isEmpty() && m_coreProcess.isStarted())
+    sendRequest(filetransfer::kRequestCopied, static_cast<int>(files.size()));
+}
+
+void MainWindow::updatePasteAction()
+{
+  // An offer from long ago is probably not what the person wants any more
+  constexpr qint64 kMaxAge = 30 * 60 * 1000;
+  const bool available = !m_remoteCopy.name.isEmpty() && m_remoteCopy.age.isValid() &&
+                         m_remoteCopy.age.elapsed() < kMaxAge && m_coreProcess.isStarted();
+  m_actionPasteFiles->setEnabled(available);
+  if (available) {
+    //: %1 is a computer name
+    m_actionPasteFiles->setText(tr("&Paste files copied on %1").arg(m_remoteCopy.name));
+  } else {
+    m_actionPasteFiles->setText(tr("&Paste files copied on another computer"));
+  }
+  m_actionPasteFiles->setToolTip(tr("Copy files on another connected computer, then paste them here with this"));
+}
+
+void MainWindow::pasteRemoteFiles()
+{
+  updatePasteAction();
+  if (!m_actionPasteFiles->isEnabled())
+    return;
+
+  const auto name = m_remoteCopy.name;
+  m_pullFrom = m_remoteCopy.address;
+  m_pullAge.start();
+  //: %1 is a computer name
+  m_statusBar->showMessage(tr("Asking %1 for the copied files...").arg(name));
+
+  auto message = new PeerMessage(
+      filetransfer::encodeRequest(filetransfer::kRequestPull, Settings::value(Settings::Core::ComputerName).toString()),
+      this
+  );
+  connect(message, &PeerMessage::finished, this, [this, message, name](const QString &answer, const QString &error) {
+    message->deleteLater();
+    if (answer == QLatin1String("accept"))
+      return;
+    m_pullFrom.clear();
+    if (answer == QLatin1String("decline")) {
+      //: %1 is a computer name
+      m_statusBar->showMessage(tr("%1 has no copied files any more").arg(name), 10000);
+    } else {
+      //: %1 is a computer name, %2 the reason
+      m_statusBar->showMessage(tr("Could not get the files from %1: %2").arg(name, error), 15000);
+    }
+  });
+  message->send(
+      m_remoteCopy.address, filetransfer::sslConfiguration(Settings::value(Settings::Security::Certificate).toString()),
+      [this](const QByteArray &fingerprint) { return isTrustedComputer(fingerprint); }
+  );
+}
+
+void MainWindow::screenLocked()
+{
+  if (!m_actionLockTogether->isChecked() || !m_coreProcess.isStarted())
+    return;
+  qInfo() << "this computer was locked, locking the others";
+  sendRequest(filetransfer::kRequestLock);
+}
+
+namespace {
+QString downloadsFolder()
+{
+  const auto downloads = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
+  return downloads.isEmpty() ? QDir::homePath() : downloads;
+}
+} // namespace
 
 void MainWindow::fileOffered(int id, const FileOffer &offer)
 {
   const auto from = offer.from.isEmpty() ? offer.address.toString() : offer.from;
   m_offerSenders.insert(id, from);
+
+  // Files this computer asked for a moment ago go straight to the clipboard
+  constexpr qint64 kPullWindow = 60000;
+  if (offer.requested && !m_pullFrom.isNull() && offer.address == m_pullFrom && m_pullAge.elapsed() < kPullWindow &&
+      isTrustedComputer(offer.fingerprint)) {
+    m_pullFrom.clear();
+    m_pullIds.insert(id);
+    m_fileReceiver->accept(id, downloadsFolder());
+    return;
+  }
 
   QStringList shown;
   for (qsizetype i = 0; i < offer.names.size() && i < 8; ++i)
@@ -1925,10 +2169,7 @@ void MainWindow::fileOffered(int id, const FileOffer &offer)
   }
   box->setInformativeText(details);
 
-  const auto folder = [] {
-    const auto downloads = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
-    return downloads.isEmpty() ? QDir::homePath() : downloads;
-  }();
+  const auto folder = downloadsFolder();
   auto accept = box->addButton(tr("Save to Downloads"), QMessageBox::AcceptRole);
   box->addButton(tr("Decline"), QMessageBox::RejectRole);
   box->setDefaultButton(qobject_cast<QPushButton *>(box->buttons().last()));
@@ -1956,6 +2197,28 @@ void MainWindow::fileOffered(int id, const FileOffer &offer)
 void MainWindow::filesReceived(int id, bool ok, const QString &error, const QStringList &files)
 {
   const auto from = m_offerSenders.take(id);
+  if (m_pullIds.remove(id) && ok) {
+    // Put them on the clipboard as files, ready to paste in Explorer, Finder or a file manager
+    auto data = new QMimeData;
+    QList<QUrl> urls;
+    QByteArray gnomeList = "copy";
+    for (const auto &file : files) {
+      urls.append(QUrl::fromLocalFile(file));
+      gnomeList += '\n' + QUrl::fromLocalFile(file).toEncoded();
+    }
+    data->setUrls(urls);
+    data->setData(QStringLiteral("x-special/gnome-copied-files"), gnomeList);
+    m_settingClipboard = true;
+    QGuiApplication::clipboard()->setMimeData(data, QClipboard::Clipboard);
+    m_settingClipboard = false;
+    m_copiedFiles = files;
+
+    //: %1 is a computer name
+    const auto text = tr("%n file(s) from %1 are ready to paste", "", static_cast<int>(files.size())).arg(from);
+    m_statusBar->showMessage(text, 15000);
+    notify(tr("Files received"), text, files.isEmpty() ? QString() : QFileInfo(files.first()).absolutePath());
+    return;
+  }
   if (ok) {
     const auto folder = files.isEmpty() ? QString() : QFileInfo(files.first()).absolutePath();
     //: %1 is a computer name, %2 a folder
@@ -1974,6 +2237,7 @@ void MainWindow::filesReceived(int id, bool ok, const QString &error, const QStr
 void MainWindow::notify(const QString &title, const QString &text, const QString &folder)
 {
   m_notifiedFolder = folder;
+  m_notificationAction = nullptr;
   if (m_trayIcon->isVisible() && QSystemTrayIcon::supportsMessages())
     m_trayIcon->showMessage(title, text, QSystemTrayIcon::Information, 8000);
 }

@@ -22,6 +22,9 @@ private Q_SLOTS:
   void declinedFiles();
   void untrustedReceiver();
   void refusesFolders();
+  void requestRoundTrip();
+  void requestGetsAnswer();
+  void untrustedRequestFails();
 
 private:
   QByteArray fingerprintOf(const QString &certificate) const;

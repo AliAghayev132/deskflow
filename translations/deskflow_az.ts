@@ -1212,6 +1212,67 @@ Bağlanmış IP artıq keçərsizdir, serveri yenidən başlatmaq lazım ola bil
         <source>The update could not be installed: %1</source>
         <translation>Yeniləməni quraşdırmaq mümkün olmadı: %1</translation>
     </message>
+    <message>
+        <source>&amp;Dim this computer when the cursor is on another</source>
+        <translation>Siçan başqa kompüterdə olanda bu ekranı &amp;qarart</translation>
+    </message>
+    <message>
+        <source>&amp;Lock all computers together</source>
+        <translation>Bütün kompüterləri birlikdə &amp;kilidlə</translation>
+    </message>
+    <message>
+        <source>When one connected computer is locked, the others lock too</source>
+        <translation>Qoşulmuş kompüterlərdən biri kilidlənəndə digərləri də kilidlənir</translation>
+    </message>
+    <message>
+        <source>Files copied on %1</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation>%1 kompüterində fayllar kopyalandı</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n file(s) can be pasted here. Click here or use Edit &gt; Paste files copied on %1.</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation>
+            <numerusform>%n faylı burada yapışdırmaq olar. Buraya klikləyin və ya Redaktə &gt; %1 kompüterində kopyalanan faylları yapışdır.</numerusform>
+            <numerusform>%n faylı burada yapışdırmaq olar. Buraya klikləyin və ya Redaktə &gt; %1 kompüterində kopyalanan faylları yapışdır.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>&amp;Paste files copied on %1</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation>%1 kompüterində kopyalanan faylları &amp;yapışdır</translation>
+    </message>
+    <message>
+        <source>&amp;Paste files copied on another computer</source>
+        <translation>Başqa kompüterdə kopyalanan faylları &amp;yapışdır</translation>
+    </message>
+    <message>
+        <source>Copy files on another connected computer, then paste them here with this</source>
+        <translation>Faylları qoşulmuş başqa kompüterdə kopyalayın, sonra bununla burada yapışdırın</translation>
+    </message>
+    <message>
+        <source>Asking %1 for the copied files...</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation>Kopyalanan fayllar %1 kompüterindən istənilir...</translation>
+    </message>
+    <message>
+        <source>%1 has no copied files any more</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation>%1 kompüterində artıq kopyalanmış fayl yoxdur</translation>
+    </message>
+    <message>
+        <source>Could not get the files from %1: %2</source>
+        <extracomment>%1 is a computer name, %2 the reason</extracomment>
+        <translation>Faylları %1 kompüterindən almaq mümkün olmadı: %2</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n file(s) from %1 are ready to paste</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation>
+            <numerusform>%1 kompüterindən %n fayl yapışdırmağa hazırdır</numerusform>
+            <numerusform>%1 kompüterindən %n fayl yapışdırmağa hazırdır</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>NewComputerWidget</name>
@@ -2185,6 +2246,21 @@ Bu ayarı aktiv etmək server konfiqurasiyası interfeysini söndürəcək.</tra
         <source>%1 changed while it was being sent</source>
         <extracomment>%1 is a file name</extracomment>
         <translation>%1 göndərilərkən dəyişdi</translation>
+    </message>
+</context>
+<context>
+    <name>deskflow::gui::PeerMessage</name>
+    <message>
+        <source>The other computer didn&apos;t answer</source>
+        <translation>Digər kompüter cavab vermədi</translation>
+    </message>
+    <message>
+        <source>The other computer could not be verified</source>
+        <translation>Digər kompüter təsdiqlənmədi</translation>
+    </message>
+    <message>
+        <source>The other computer sent an answer that could not be read</source>
+        <translation>Digər kompüterin cavabı oxunmadı</translation>
     </message>
 </context>
 <context>

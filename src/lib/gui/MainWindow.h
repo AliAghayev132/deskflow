@@ -9,12 +9,16 @@
 
 #pragma once
 
+#include <QElapsedTimer>
 #include <QMainWindow>
 #include <QPointer>
 #include <QProcess>
 #include <QRegularExpression>
+#include <QSet>
 #include <QSystemTrayIcon>
 #include <QUrl>
+
+#include <functional>
 
 #include "config/ServerConfig.h"
 #include "gui/core/CoreProcess.h"
@@ -29,6 +33,7 @@ class QAction;
 class QMenu;
 class QTimer;
 class QProgressDialog;
+class ScreenDimmer;
 class QDragEnterEvent;
 class QDropEvent;
 class QLocalServer;
@@ -37,7 +42,9 @@ class DeskflowApplication;
 class LogDock;
 namespace deskflow::gui {
 class ClipboardHistory;
+class ScreenLock;
 class Updater;
+struct PeerRequest;
 struct UpdateInfo;
 class FileReceiver;
 class FileSender;
@@ -242,6 +249,20 @@ private:
    */
   void sendFiles(QStringList paths = {});
   bool isTrustedComputer(const QByteArray &fingerprint) const;
+  /// Send files to one computer, requested means it asked for the files copied here
+  void startSending(const QString &name, const QHostAddress &address, const QStringList &paths, bool requested);
+  /// Send a short request to every connected computer, except the one at skip
+  void sendRequest(const QString &type, int count = 0, const QHostAddress &skip = {});
+  /// Answers requests from other computers, see FileReceiver::setRequestHandler
+  QString handlePeerRequest(const deskflow::gui::PeerRequest &request);
+  /// Files were copied here, tell the other computers they can paste them
+  void clipboardChanged();
+  /// Ask the computer that copied files to send them here
+  void pasteRemoteFiles();
+  void updatePasteAction();
+  /// Dim this computer's screens while the cursor is on another one
+  void setActiveHere(bool active);
+  void screenLocked();
   void fileOffered(int id, const deskflow::gui::FileOffer &offer);
   void filesReceived(int id, bool ok, const QString &error, const QStringList &files);
   void notify(const QString &title, const QString &text, const QString &folder = {});
@@ -350,6 +371,25 @@ private:
   QAction *m_actionSendFiles = nullptr;
   QHash<int, QString> m_offerSenders;
   QString m_notifiedFolder;
+  std::function<void()> m_notificationAction;
+  ScreenDimmer *m_dimmer = nullptr;
+  deskflow::gui::ScreenLock *m_screenLock = nullptr;
+  QAction *m_actionDimInactive = nullptr;
+  QAction *m_actionLockTogether = nullptr;
+  QAction *m_actionPasteFiles = nullptr;
+  QStringList m_copiedFiles;
+  bool m_settingClipboard = false;
+  /// The last computer that said it copied files, and where to ask for them
+  struct RemoteCopy
+  {
+    QString name;
+    QHostAddress address;
+    int count = 0;
+    QElapsedTimer age;
+  } m_remoteCopy;
+  QHostAddress m_pullFrom;
+  QElapsedTimer m_pullAge;
+  QSet<int> m_pullIds;
   deskflow::gui::Updater *m_updater = nullptr;
   QAction *m_actionCheckUpdates = nullptr;
   QAction *m_actionTestBuilds = nullptr;

@@ -45,6 +45,22 @@
             <numerusform>%n files from %1 saved in %2</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>%n file(s) can be pasted here. Click here or use Edit &gt; Paste files copied on %1.</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation>
+            <numerusform>A file can be pasted here. Click here or use Edit &gt; Paste files copied on %1.</numerusform>
+            <numerusform>%n files can be pasted here. Click here or use Edit &gt; Paste files copied on %1.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n file(s) from %1 are ready to paste</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation>
+            <numerusform>A file from %1 is ready to paste</numerusform>
+            <numerusform>%n files from %1 are ready to paste</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>OnboardingDialog</name>

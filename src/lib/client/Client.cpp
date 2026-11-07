@@ -219,6 +219,8 @@ void Client::getCursorPos(int32_t &x, int32_t &y) const
 void Client::enter(int32_t xAbs, int32_t yAbs, uint32_t, KeyModifierMask mask, bool)
 {
   m_active = true;
+  // The app watches for these two lines, e.g. to dim the screen of the computer not in use
+  LOG_INFO("cursor entered this screen");
   if (m_relativeMouseMoves && m_hasRelativeRestorePosition) {
     xAbs = m_relativeRestoreX;
     yAbs = m_relativeRestoreY;
@@ -234,6 +236,7 @@ bool Client::leave()
     saveRelativeRestorePosition();
   }
   m_active = false;
+  LOG_INFO("cursor left this screen");
 
   m_computer->leave();
 

@@ -17,3 +17,13 @@ bool isOSXInterfaceStyleDark();
 void forceAppActive();
 void macOSNativeHide();
 void installQuitHandler(std::function<bool()> shouldQuit);
+
+/**
+ * @brief Calls onLocked whenever the screen gets locked
+ */
+void observeOSXScreenLock(std::function<void()> onLocked);
+
+/**
+ * @brief Locks the screen right away, returns false when the system offers no way to
+ */
+bool lockOSXScreen();

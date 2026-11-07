@@ -14,3 +14,10 @@ create_test(
   SOURCE ConnectionsPanelTests.cpp
   WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/gui"
 )
+
+create_test(
+  NAME ScreenDimmerTests
+  DEPENDS gui
+  SOURCE ScreenDimmerTests.cpp
+  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/gui"
+)

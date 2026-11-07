@@ -94,6 +94,8 @@ public:
     inline static const auto ActiveProfile = QStringLiteral("gui/activeProfile");
     inline static const auto OnboardingDone = QStringLiteral("gui/onboardingDone");
     inline static const auto ClipboardHistory = QStringLiteral("gui/clipboardHistory");
+    inline static const auto DimInactive = QStringLiteral("gui/dimInactive");
+    inline static const auto LockTogether = QStringLiteral("gui/lockTogether");
   };
   struct Log
   {
@@ -348,6 +350,8 @@ private:
     , Gui::ActiveProfile
     , Gui::OnboardingDone
     , Gui::ClipboardHistory
+    , Gui::DimInactive
+    , Gui::LockTogether
     , Security::Certificate
     , Security::CheckPeers
     , Security::KeySize
@@ -411,6 +415,8 @@ private:
     , Gui::SymbolicTrayIcon
     , Gui::ClipboardHistory
     , Gui::UpdateTestBuilds
+    , Gui::DimInactive
+    , Gui::LockTogether
     , Security::TlsEnabled
     , Security::CheckPeers
     , Server::EnableClipboard

@@ -25,6 +25,8 @@
 #include <QStorageInfo>
 #include <QTimer>
 
+#include <algorithm>
+
 namespace deskflow::gui {
 
 namespace {
@@ -95,7 +97,7 @@ qint64 FileOffer::totalSize() const
 
 namespace filetransfer {
 
-QByteArray encodeOffer(const QString &from, const QStringList &names, const QList<qint64> &sizes)
+QByteArray encodeOffer(const QString &from, const QStringList &names, const QList<qint64> &sizes, bool requested)
 {
   QJsonArray files;
   for (qsizetype i = 0; i < names.size(); ++i)
@@ -103,7 +105,34 @@ QByteArray encodeOffer(const QString &from, const QStringList &names, const QLis
   auto object = header(kTypeOffer);
   object.insert(QStringLiteral("from"), from);
   object.insert(QStringLiteral("files"), files);
+  if (requested)
+    object.insert(QStringLiteral("requested"), true);
   return toLine(object);
+}
+
+QByteArray encodeRequest(const QString &type, const QString &from, int count)
+{
+  auto object = header(type);
+  object.insert(QStringLiteral("from"), from);
+  if (count > 0)
+    object.insert(QStringLiteral("count"), count);
+  return toLine(object);
+}
+
+std::optional<PeerRequest> parseRequest(const QByteArray &line)
+{
+  const auto object = parseLine(line);
+  if (!object)
+    return std::nullopt;
+  const auto type = object->value(QStringLiteral("type")).toString();
+  if (type != kRequestCopied && type != kRequestPull && type != kRequestLock)
+    return std::nullopt;
+
+  PeerRequest request;
+  request.type = type;
+  request.from = object->value(QStringLiteral("from")).toString().simplified().left(255);
+  request.count = std::clamp(object->value(QStringLiteral("count")).toInt(), 0, kMaxFiles);
+  return request;
 }
 
 std::optional<FileOffer> parseOffer(const QByteArray &line)
@@ -118,6 +147,7 @@ std::optional<FileOffer> parseOffer(const QByteArray &line)
 
   FileOffer offer;
   offer.from = object->value(QStringLiteral("from")).toString().simplified().left(255);
+  offer.requested = object->value(QStringLiteral("requested")).toBool();
   for (const auto &value : files) {
     const auto file = value.toObject();
     const auto size = file.value(QStringLiteral("size")).toInteger(-1);
@@ -372,6 +402,15 @@ void FileReceiver::readFrom(int id)
         fail(id, {});
       return;
     }
+    if (auto request = filetransfer::parseRequest(*line)) {
+      const auto peer = in->socket->peerCertificate();
+      request->fingerprint = peer.isNull() ? QByteArray() : peer.digest(QCryptographicHash::Sha256);
+      request->address = plainAddress(in->socket->peerAddress());
+      const auto answer = m_requestHandler ? m_requestHandler(*request) : QString();
+      answerRequest(id, answer.isEmpty() ? kTypeDone : answer);
+      return;
+    }
+
     auto offer = filetransfer::parseOffer(*line);
     if (!offer) {
       fail(id, {});
@@ -425,6 +464,21 @@ void FileReceiver::accept(int id, const QString &directory)
   if (!openNextFile(*in))
     return;
   receive(*in);
+}
+
+void FileReceiver::answerRequest(int id, const QString &answer)
+{
+  const auto it = m_incoming.find(id);
+  if (it == m_incoming.end())
+    return;
+
+  auto incoming = std::move(it->second);
+  m_incoming.erase(it);
+  auto socket = incoming->socket;
+  socket->disconnect(this);
+  socket->write(filetransfer::encodeMessage(answer));
+  connect(socket, &QSslSocket::disconnected, socket, &QObject::deleteLater);
+  socket->disconnectFromHost();
 }
 
 void FileReceiver::decline(int id)
@@ -554,9 +608,10 @@ void FileReceiver::fail(int id, const QString &error)
 
 // Sending
 
-FileSender::FileSender(const QString &from, const QStringList &paths, QObject *parent)
+FileSender::FileSender(const QString &from, const QStringList &paths, QObject *parent, bool requested)
     : QObject(parent),
       m_from{from},
+      m_requested{requested},
       m_paths{paths},
       m_answerTimer{new QTimer(this)}
 {
@@ -652,7 +707,7 @@ void FileSender::encrypted()
   QStringList names;
   for (const auto &path : std::as_const(m_paths))
     names.append(QFileInfo(path).fileName());
-  m_socket->write(filetransfer::encodeOffer(m_from, names, m_sizes));
+  m_socket->write(filetransfer::encodeOffer(m_from, names, m_sizes, m_requested));
   m_answerTimer->start(filetransfer::kAnswerTimeout);
   Q_EMIT waiting();
 }
@@ -752,6 +807,65 @@ void FileSender::finish(bool ok, const QString &error)
   if (!ok)
     qWarning().noquote() << "sending files failed:" << error;
   Q_EMIT finished(ok, error);
+}
+
+// One request
+
+PeerMessage::PeerMessage(const QByteArray &request, QObject *parent)
+    : QObject(parent),
+      m_request{request},
+      m_timer{new QTimer(this)}
+{
+  m_timer->setSingleShot(true);
+  connect(m_timer, &QTimer::timeout, this, [this] { finish({}, tr("The other computer didn't answer")); });
+}
+
+void PeerMessage::send(
+    const QHostAddress &address, const QSslConfiguration &config, const FileSender::TrustCheck &trusted, quint16 port
+)
+{
+  m_socket = new QSslSocket(this);
+  m_socket->setSslConfiguration(config);
+  connect(m_socket, &QSslSocket::sslErrors, m_socket, [this](const QList<QSslError> &) {
+    m_socket->ignoreSslErrors();
+  });
+  connect(m_socket, &QSslSocket::encrypted, this, [this, trusted] {
+    const auto certificate = m_socket->peerCertificate();
+    const auto fingerprint = certificate.isNull() ? QByteArray() : certificate.digest(QCryptographicHash::Sha256);
+    if (fingerprint.isEmpty() || !trusted || !trusted(fingerprint)) {
+      finish({}, tr("The other computer could not be verified"));
+      return;
+    }
+    m_socket->write(m_request);
+  });
+  connect(m_socket, &QSslSocket::readyRead, this, [this] {
+    m_buffer.append(m_socket->readAll());
+    if (const auto line = takeLine(m_buffer))
+      finish(filetransfer::messageType(*line), {});
+    else if (m_buffer.size() > filetransfer::kMaxLine)
+      finish({}, tr("The other computer sent an answer that could not be read"));
+  });
+  connect(m_socket, &QSslSocket::errorOccurred, this, [this](QAbstractSocket::SocketError) {
+    finish({}, m_socket ? m_socket->errorString() : QString());
+  });
+
+  m_timer->start(kConnectTimeout);
+  m_socket->connectToHostEncrypted(address.toString(), port);
+}
+
+void PeerMessage::finish(const QString &answer, const QString &error)
+{
+  if (m_done)
+    return;
+  m_done = true;
+  m_timer->stop();
+  if (m_socket) {
+    m_socket->disconnect(this);
+    m_socket->disconnectFromHost();
+    m_socket->deleteLater();
+    m_socket = nullptr;
+  }
+  Q_EMIT finished(answer, error);
 }
 
 } // namespace deskflow::gui

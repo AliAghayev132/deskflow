@@ -36,8 +36,21 @@ struct FileOffer
   QList<qint64> sizes;    ///< size of each file in bytes
   QByteArray fingerprint; ///< SHA-256 of the sender's certificate, empty when it sent none
   QHostAddress address;   ///< where the offer came from
+  bool requested = false; ///< sent because this computer asked for the files it copied there
 
   [[nodiscard]] qint64 totalSize() const;
+};
+
+/**
+ * @brief A short message from another computer over the same secure channel
+ */
+struct PeerRequest
+{
+  QString type;           ///< filetransfer::kRequestCopied, kRequestPull or kRequestLock
+  QString from;           ///< computer name the sender gave
+  QHostAddress address;   ///< where it came from
+  QByteArray fingerprint; ///< SHA-256 of the sender's certificate, empty when it sent none
+  int count = 0;          ///< for "copied": how many files
 };
 
 /**
@@ -52,6 +65,11 @@ struct FileOffer
  *   receiver: {"app":"deskflow","v":1,"type":"accept"} or {"type":"decline"}
  *   sender:   <bytes of every file, back to back>
  *   receiver: {"app":"deskflow","v":1,"type":"done"}
+ *
+ * Instead of an offer the first line can also be a short request, answered with one line:
+ *   {"type":"copied","from":"laptop","count":3}  files were copied there, they can be pulled
+ *   {"type":"pull","from":"desktop"}             please send the files you copied, as a "requested" offer
+ *   {"type":"lock","from":"desktop"}             that computer was locked, lock this one too
  */
 namespace filetransfer {
 inline constexpr quint16 kPort = 24803;
@@ -62,7 +80,14 @@ inline constexpr int kAnswerTimeout = 120000;
 /// Data is written in pieces of this size so big files don't end up in memory
 inline constexpr qint64 kChunkSize = 256 * 1024;
 
-QByteArray encodeOffer(const QString &from, const QStringList &names, const QList<qint64> &sizes);
+inline const QString kRequestCopied = QStringLiteral("copied");
+inline const QString kRequestPull = QStringLiteral("pull");
+inline const QString kRequestLock = QStringLiteral("lock");
+
+QByteArray
+encodeOffer(const QString &from, const QStringList &names, const QList<qint64> &sizes, bool requested = false);
+QByteArray encodeRequest(const QString &type, const QString &from, int count = 0);
+std::optional<PeerRequest> parseRequest(const QByteArray &line);
 std::optional<FileOffer> parseOffer(const QByteArray &line);
 QByteArray encodeMessage(const QString &type);
 /// The type of a valid one line message, empty for anything else
@@ -100,7 +125,17 @@ public:
   explicit FileReceiver(QObject *parent = nullptr);
   ~FileReceiver() override;
 
+  using RequestHandler = std::function<QString(const PeerRequest &request)>;
+
   bool listen(const QSslConfiguration &config, quint16 port = filetransfer::kPort);
+
+  /**
+   * @brief Decides on requests, returns the answer type ("accept", "decline" or "done")
+   */
+  void setRequestHandler(const RequestHandler &handler)
+  {
+    m_requestHandler = handler;
+  }
   void close();
   [[nodiscard]] bool isListening() const;
   [[nodiscard]] quint16 port() const;
@@ -128,9 +163,11 @@ private:
   bool openNextFile(Incoming &incoming);
   void fail(int id, const QString &error);
   void succeed(int id);
+  void answerRequest(int id, const QString &answer);
   Incoming *find(int id);
 
   QSslServer *m_server = nullptr;
+  RequestHandler m_requestHandler;
   std::map<int, std::unique_ptr<Incoming>> m_incoming;
   int m_nextId = 1;
 };
@@ -145,7 +182,10 @@ class FileSender : public QObject
 public:
   using TrustCheck = std::function<bool(const QByteArray &fingerprint)>;
 
-  FileSender(const QString &from, const QStringList &paths, QObject *parent = nullptr);
+  /**
+   * @param requested the receiver asked for these files, see FileOffer::requested
+   */
+  FileSender(const QString &from, const QStringList &paths, QObject *parent = nullptr, bool requested = false);
   ~FileSender() override;
 
   /**
@@ -183,6 +223,7 @@ private:
   void finish(bool ok, const QString &error);
 
   QString m_from;
+  bool m_requested = false;
   QStringList m_paths;
   QList<qint64> m_sizes;
   qint64 m_total = 0;
@@ -196,6 +237,35 @@ private:
   QSslSocket *m_socket = nullptr;
   QFile *m_file = nullptr;
   QTimer *m_answerTimer = nullptr;
+};
+
+/**
+ * @brief Sends one request to another computer and waits for its answer
+ */
+class PeerMessage : public QObject
+{
+  Q_OBJECT
+
+public:
+  explicit PeerMessage(const QByteArray &request, QObject *parent = nullptr);
+
+  void send(
+      const QHostAddress &address, const QSslConfiguration &config, const FileSender::TrustCheck &trusted,
+      quint16 port = filetransfer::kPort
+  );
+
+Q_SIGNALS:
+  /// answer is the type the other computer replied with, empty when it failed
+  void finished(const QString &answer, const QString &error);
+
+private:
+  void finish(const QString &answer, const QString &error);
+
+  QByteArray m_request;
+  QByteArray m_buffer;
+  QSslSocket *m_socket = nullptr;
+  QTimer *m_timer = nullptr;
+  bool m_done = false;
 };
 
 } // namespace deskflow::gui

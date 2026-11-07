@@ -1207,6 +1207,65 @@ Bağlı bir IP artık geçersiz, sunucuyu yeniden başlatmanız gerekebilir.</tr
         <source>The update could not be installed: %1</source>
         <translation>Güncelleme yüklenemedi: %1</translation>
     </message>
+    <message>
+        <source>&amp;Dim this computer when the cursor is on another</source>
+        <translation>İmleç başka bilgisayardayken bu ekranı &amp;karart</translation>
+    </message>
+    <message>
+        <source>&amp;Lock all computers together</source>
+        <translation>Tüm bilgisayarları birlikte &amp;kilitle</translation>
+    </message>
+    <message>
+        <source>When one connected computer is locked, the others lock too</source>
+        <translation>Bağlı bilgisayarlardan biri kilitlendiğinde diğerleri de kilitlenir</translation>
+    </message>
+    <message>
+        <source>Files copied on %1</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation>%1 bilgisayarında dosyalar kopyalandı</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n file(s) can be pasted here. Click here or use Edit &gt; Paste files copied on %1.</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation>
+            <numerusform>%n dosya buraya yapıştırılabilir. Buraya tıklayın veya Düzen &gt; %1 bilgisayarında kopyalanan dosyaları yapıştır&apos;ı kullanın.</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>&amp;Paste files copied on %1</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation>%1 bilgisayarında kopyalanan dosyaları &amp;yapıştır</translation>
+    </message>
+    <message>
+        <source>&amp;Paste files copied on another computer</source>
+        <translation>Başka bilgisayarda kopyalanan dosyaları &amp;yapıştır</translation>
+    </message>
+    <message>
+        <source>Copy files on another connected computer, then paste them here with this</source>
+        <translation>Dosyaları bağlı başka bir bilgisayarda kopyalayın, ardından bununla buraya yapıştırın</translation>
+    </message>
+    <message>
+        <source>Asking %1 for the copied files...</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation>Kopyalanan dosyalar %1 bilgisayarından isteniyor...</translation>
+    </message>
+    <message>
+        <source>%1 has no copied files any more</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation>%1 bilgisayarında artık kopyalanmış dosya yok</translation>
+    </message>
+    <message>
+        <source>Could not get the files from %1: %2</source>
+        <extracomment>%1 is a computer name, %2 the reason</extracomment>
+        <translation>Dosyalar %1 bilgisayarından alınamadı: %2</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n file(s) from %1 are ready to paste</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation>
+            <numerusform>%1 bilgisayarından %n dosya yapıştırmaya hazır</numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>NewComputerWidget</name>
@@ -2178,6 +2237,21 @@ Bu ayarı etkinleştirmek sunucu yapılandırma arayüzünü devre dışı bıra
         <source>%1 changed while it was being sent</source>
         <extracomment>%1 is a file name</extracomment>
         <translation>%1 gönderilirken değişti</translation>
+    </message>
+</context>
+<context>
+    <name>deskflow::gui::PeerMessage</name>
+    <message>
+        <source>The other computer didn&apos;t answer</source>
+        <translation>Diğer bilgisayar yanıt vermedi</translation>
+    </message>
+    <message>
+        <source>The other computer could not be verified</source>
+        <translation>Diğer bilgisayar doğrulanamadı</translation>
+    </message>
+    <message>
+        <source>The other computer sent an answer that could not be read</source>
+        <translation>Diğer bilgisayarın yanıtı okunamadı</translation>
     </message>
 </context>
 <context>

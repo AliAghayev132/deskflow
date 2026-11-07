@@ -15,6 +15,8 @@
 #import <UserNotifications/UNUserNotificationCenter.h>
 #import <objc/runtime.h>
 
+#include <dlfcn.h>
+
 #import <QtGlobal>
 
 #pragma clang diagnostic push
@@ -154,4 +156,36 @@ void installQuitHandler(std::function<bool()> shouldQuit)
                                                                 Q_UNUSED(note)
                                                                 s_isSystemShuttingDown = YES;
                                                               }];
+}
+
+void observeOSXScreenLock(std::function<void()> onLocked)
+{
+  static std::function<void()> s_onLocked;
+  const bool first = !s_onLocked;
+  s_onLocked = std::move(onLocked);
+  if (!first)
+    return;
+
+  [[NSDistributedNotificationCenter defaultCenter] addObserverForName:@"com.apple.screenIsLocked"
+                                                               object:nil
+                                                                queue:[NSOperationQueue mainQueue]
+                                                           usingBlock:^(NSNotification *) {
+                                                             if (s_onLocked)
+                                                               s_onLocked();
+                                                           }];
+}
+
+bool lockOSXScreen()
+{
+  // The same call the Lock Screen menu item uses. It is private, callers fall back to sleeping
+  // the display, which locks when a password is required right after sleep (the default).
+  using LockFn = int (*)();
+  static auto lockScreen = [] {
+    void *login = dlopen("/System/Library/PrivateFrameworks/login.framework/Versions/Current/login", RTLD_LAZY);
+    return login ? reinterpret_cast<LockFn>(dlsym(login, "SACLockScreenImmediate")) : nullptr;
+  }();
+  if (!lockScreen)
+    return false;
+  lockScreen();
+  return true;
 }

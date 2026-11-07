@@ -1203,6 +1203,65 @@ Additionally, check you are able to %1 the server config file: %2</source>
         <source>The update could not be installed: %1</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>&amp;Dim this computer when the cursor is on another</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Lock all computers together</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>When one connected computer is locked, the others lock too</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Files copied on %1</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n file(s) can be pasted here. Click here or use Edit &gt; Paste files copied on %1.</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>&amp;Paste files copied on %1</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Paste files copied on another computer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy files on another connected computer, then paste them here with this</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Asking %1 for the copied files...</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 has no copied files any more</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not get the files from %1: %2</source>
+        <extracomment>%1 is a computer name, %2 the reason</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n file(s) from %1 are ready to paste</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>NewComputerWidget</name>
@@ -2171,6 +2230,21 @@ Enabling this setting will disable the server config GUI.</source>
     <message>
         <source>%1 changed while it was being sent</source>
         <extracomment>%1 is a file name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>deskflow::gui::PeerMessage</name>
+    <message>
+        <source>The other computer didn&apos;t answer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The other computer could not be verified</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The other computer sent an answer that could not be read</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

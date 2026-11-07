@@ -51,6 +51,8 @@ add_library(${target} STATIC
   core/NetworkMonitor.cpp
   core/PairingCode.cpp
   core/PairingCode.h
+  core/ScreenLock.cpp
+  core/ScreenLock.h
   core/ServerDiscovery.cpp
   core/ServerDiscovery.h
   core/Updater.cpp
@@ -132,12 +134,19 @@ add_library(${target} STATIC
   widgets/RemoveComputerWidget.cpp
   widgets/RemoveComputerWidget.h
   widgets/SearchWidget.h
+  widgets/ScreenDimmer.cpp
+  widgets/ScreenDimmer.h
   widgets/SearchWidget.cpp
   widgets/StatusBar.cpp
   widgets/StatusBar.h
   widgets/SettingsDialogButtonBox.cpp
   widgets/SettingsDialogButtonBox.h
 )
+
+if(WIN32)
+  # Screen lock notifications
+  target_link_libraries(${target} PRIVATE wtsapi32)
+endif()
 
 # The updater picks the installer built for the same architecture
 target_compile_definitions(${target} PRIVATE DESKFLOW_BUILD_ARCHITECTURE="${BUILD_ARCHITECTURE}")
