@@ -60,6 +60,7 @@ protected:
   void toggleWin32Foreground(bool enabled);
 
   void toggleClipboard(bool enabled);
+  void toggleDiscoverable(bool enabled);
   void setClipboardLimit(int limit);
 
   void toggleHeartbeat(bool enabled);
@@ -104,6 +105,7 @@ private:
   ServerConfig &m_originalServerConfig;
   NetworkProtocol m_protocol;
   bool m_enableClipboard;
+  bool m_discoverable = true;
   bool m_enableHeartbeat;
   int m_heartbeatRate;
   int m_switchDelay;

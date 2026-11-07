@@ -498,6 +498,14 @@ void CoreProcess::start(std::optional<ProcessMode> processModeOption)
   m_lastProcessMode = processMode;
 }
 
+bool CoreProcess::setCursorLocked(bool locked)
+{
+  if (!m_coreIpcClient || !m_coreIpcClient->isConnected())
+    return false;
+  m_coreIpcClient->sendLockCursor(locked);
+  return true;
+}
+
 void CoreProcess::stop(std::optional<ProcessMode> processModeOption)
 {
   QMutexLocker locker(&m_processMutex);

@@ -16,11 +16,13 @@
 #include "gui/MainWindow.h"
 #include "gui/Messages.h"
 #include "gui/StyleUtils.h"
+#include "gui/Theme.h"
 
 #include <QApplication>
 #include <QCommandLineParser>
 #include <QLocalSocket>
 #include <QMessageBox>
+#include <QPushButton>
 #include <QSharedMemory>
 
 #if defined(Q_OS_MACOS)
@@ -119,8 +121,9 @@ int main(int argc, char *argv[])
     return s_exitDuplicate;
   }
 
-  if (!deskflow::platform::isMac() && qEnvironmentVariable("XDG_CURRENT_DESKTOP") != QLatin1String("KDE")) {
-    QApplication::setStyle("fusion");
+  // The Deskflow theme is used everywhere except KDE, whose users expect their own Plasma style
+  if (qEnvironmentVariable("XDG_CURRENT_DESKTOP") != QLatin1String("KDE")) {
+    deskflow::gui::theme::apply();
   }
 
   // Sets the fallback icon path and fallback theme
@@ -175,6 +178,31 @@ bool checkMacAssistiveDevices()
 
   bool result = AXIsProcessTrustedWithOptions(options);
   CFRelease(options);
-  return result;
+
+  // Wait for the user instead of quitting, so turning the switch on in System Settings is enough
+  while (!result) {
+    QMessageBox box;
+    box.setIcon(QMessageBox::Information);
+    box.setWindowTitle(kAppName);
+    //: %1 is the app name
+    box.setText(QObject::tr("%1 needs Accessibility access to share your keyboard and mouse.").arg(kAppName));
+    //: %1 is the app name
+    box.setInformativeText(
+        QObject::tr(
+            "Turn on %1 in System Settings > Privacy & Security > Accessibility, then click Retry.\n\n"
+            "If %1 is already on, select it, remove it with the minus button and add it again. "
+            "This is needed after installing a new version."
+        )
+            .arg(kAppName)
+    );
+    auto retry = box.addButton(QObject::tr("Retry"), QMessageBox::AcceptRole);
+    box.addButton(QMessageBox::Close);
+    box.setDefaultButton(retry);
+    box.exec();
+    if (box.clickedButton() != retry)
+      return false;
+    result = AXIsProcessTrusted();
+  }
+  return true;
 }
 #endif

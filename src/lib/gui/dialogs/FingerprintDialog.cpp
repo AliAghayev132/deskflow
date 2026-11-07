@@ -52,17 +52,19 @@ FingerprintDialog::FingerprintDialog(
     m_lblHeader->setAlignment(Qt::AlignHCenter);
     m_lblFooter->setAlignment(Qt::AlignHCenter);
 
-    auto body =
-        tr("Compare the fingerprints in this dialog to those on the %1.\n"
-           "Only connect if they match!");
-
     if (isServer) {
       setWindowTitle(tr("New client connecting"));
-      m_lblHeader->setText(body.arg(tr("client")));
+      m_lblHeader->setText(
+          tr("Check that the client's pairing code matches the code shown on that computer.\n"
+             "Only allow the connection if they match!")
+      );
       m_lblFooter->setText(tr("\nTrust client and allow connection?\n"));
     } else {
       setWindowTitle(tr("Connecting to a new server"));
-      m_lblHeader->setText(body.arg(tr("server")));
+      m_lblHeader->setText(
+          tr("Check that the server's pairing code matches the code shown on the server.\n"
+             "Only connect if they match!")
+      );
       m_lblFooter->setText(tr("\nDo you want to connect to the server?\n"));
     }
 

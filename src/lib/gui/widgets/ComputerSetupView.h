@@ -15,6 +15,7 @@ class QMouseEvent;
 class QResizeEvent;
 class QDragEnterEvent;
 class ComputerSetupModel;
+class ComputerTileDelegate;
 
 class ComputerSetupView : public QTableView
 {
@@ -34,10 +35,17 @@ protected:
   void resizeEvent(QResizeEvent *) override;
   void dragEnterEvent(QDragEnterEvent *event) override;
   void dragMoveEvent(QDragMoveEvent *event) override;
+  void dragLeaveEvent(QDragLeaveEvent *event) override;
+  void dropEvent(QDropEvent *event) override;
   void startDrag(Qt::DropActions supportedActions) override;
   void initViewItemOption(QStyleOptionViewItem *option) const override;
   void scrollTo(const QModelIndex &, ScrollHint) override
   {
     // do nothing
   }
+
+private:
+  void setDropTarget(const QModelIndex &index);
+
+  ComputerTileDelegate *m_delegate = nullptr;
 };

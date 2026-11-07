@@ -9,13 +9,18 @@
 
 #pragma once
 
+#include <QElapsedTimer>
 #include <QMainWindow>
+#include <QPointer>
 #include <QProcess>
 #include <QRegularExpression>
+#include <QSet>
 #include <QSystemTrayIcon>
 #include <QUrl>
 
-#include "VersionChecker.h"
+#include <functional>
+#include <optional>
+
 #include "config/ServerConfig.h"
 #include "gui/core/CoreProcess.h"
 #include "gui/core/NetworkMonitor.h"
@@ -27,10 +32,31 @@
 
 class QAction;
 class QMenu;
+class QTimer;
+class QProgressDialog;
+class ScreenDimmer;
+class QDragEnterEvent;
+class QDropEvent;
 class QLocalServer;
 
 class DeskflowApplication;
 class LogDock;
+namespace deskflow::gui {
+class ClipboardHistory;
+class ScreenLock;
+class Tailscale;
+class Updater;
+struct PeerRequest;
+struct UpdateInfo;
+class FileReceiver;
+class FileSender;
+struct FileOffer;
+class ServerDiscovery;
+struct DiscoveredServer;
+struct LinkPeer;
+} // namespace deskflow::gui
+class ConnectionsPanel;
+class ProfileBar;
 class StatusBar;
 
 namespace Ui {
@@ -76,6 +102,8 @@ public:
 
 protected:
   void changeEvent(QEvent *e) override;
+  void dragEnterEvent(QDragEnterEvent *event) override;
+  void dropEvent(QDropEvent *event) override;
   bool eventFilter(QObject *obj, QEvent *event) override;
 
 private:
@@ -96,7 +124,6 @@ private:
 
   void clearSettings();
   void openAboutDialog();
-  void openGetNewVersionUrl() const;
   void openSettings();
   void startCore();
   void stopCore();
@@ -131,6 +158,15 @@ private:
   void showConfigureServer(const QString &message);
   void showConfigureClient();
   void restoreWindow();
+
+  /**
+   * @brief While the log is hidden the window has a fixed size, make it match what is shown now
+   *
+   * Panels appear and disappear (connections, mode options, longer translations), so the
+   * fixed size is updated whenever the layout changes instead of squeezing the contents.
+   */
+  void fitToContents();
+  bool m_fitPending = false;
   void setupControls();
   void showFirstConnectedMessage();
   void updateStatus();
@@ -144,6 +180,131 @@ private:
   void updateTimeoutDelay(int newDelay);
   void setHelpFilePath();
   void showHelpViewer() const;
+
+  /**
+   * @brief Make another profile active: stops the core, loads the profile into the UI and restarts the core if it was
+   * running
+   */
+  void switchProfile(const QString &name);
+
+  /**
+   * @brief Update the profile selector and the tray profile menu
+   */
+  void refreshProfiles();
+
+  /**
+   * @brief Fill the clipboard history menu, called each time it opens
+   */
+  void refreshClipboardMenu();
+
+  /**
+   * @brief Draw the mode card icons in the colors of the current theme
+   */
+  void updateModeIcons();
+
+  /**
+   * @brief Answer discovery queries while this computer runs as a discoverable server
+   */
+  void updateDiscovery();
+
+  /**
+   * @brief Look for servers on the network
+   * @param automatic true when started by the app rather than the Find button, the result is applied silently
+   */
+  void findServers(bool automatic = false);
+  void serversFound(const QList<deskflow::gui::DiscoveredServer> &servers);
+
+  /**
+   * @brief Remember the MAC of the server the user picked so it can be woken up later
+   */
+  void rememberServer(const deskflow::gui::DiscoveredServer &server);
+  void wakeServer();
+
+  /**
+   * @brief Remember the MAC of a connected client so the server can wake it up later
+   */
+  void rememberClient(const deskflow::gui::LinkPeer &peer);
+
+  /**
+   * @brief Fill the wake up menu with the computers we know a MAC for, called each time it opens
+   */
+  void refreshWakeMenu();
+  void wakeComputer(const QString &name, const QString &mac);
+
+  /**
+   * @brief Say hello to the server while connected, for the round trip time and Wake-on-LAN
+   */
+  void updateLink();
+
+  /**
+   * @brief Accept file offers while the core runs with TLS
+   */
+  void updateFileReceiver();
+
+  /**
+   * @brief Connected computers files can be sent to, by name
+   */
+  QList<QPair<QString, QHostAddress>> fileTargets() const;
+
+  /**
+   * @brief Send files to a connected computer, asks for the files and the computer when needed
+   */
+  void sendFiles(QStringList paths = {});
+  bool isTrustedComputer(const QByteArray &fingerprint) const;
+  /// Send files to one computer, requested means it asked for the files copied here
+  void startSending(
+      const QString &name, const QHostAddress &address, const QStringList &paths, bool requested,
+      const std::function<void()> &onDone = {}
+  );
+  /// Send a short request to every connected computer, except the one at skip, from is this computer by default
+  void sendRequest(const QString &type, int count = 0, const QHostAddress &skip = {}, const QString &from = {});
+  /// Ask a computer for the files copied there, done gets its answer
+  void requestPull(
+      const QString &name, const QHostAddress &address,
+      const std::function<void(const QString &answer, const QString &error)> &done
+  );
+  /// Answers requests from other computers, see FileReceiver::setRequestHandler
+  QString handlePeerRequest(const deskflow::gui::PeerRequest &request);
+  /// Files were copied here, tell the other computers they can paste them
+  void clipboardChanged();
+  /// Ask the computer that copied files to send them here
+  void pasteRemoteFiles();
+  void updatePasteAction();
+  /// Dim this computer's screens while the cursor is on another one
+  void setActiveHere(bool active);
+  void screenLocked();
+  /// Game mode: notice full screen apps here, and keep the cursor where one is in front
+  void checkFullScreen();
+  void updateCursorLock();
+  void fileOffered(int id, const deskflow::gui::FileOffer &offer);
+  void filesReceived(int id, bool ok, const QString &error, const QStringList &files);
+  void notify(const QString &title, const QString &text, const QString &folder = {});
+
+  /**
+   * @param manual show the result even when there is no update
+   */
+  void checkForUpdates(bool manual);
+  void updateAvailable(const deskflow::gui::UpdateInfo &update);
+  /// Explain the update found and offer to install it
+  void showUpdate();
+  void installUpdate(const QString &file);
+
+  /**
+   * @brief Runs every few seconds: switches profile when the network changes and reconnects a client after
+   * sleep or a network change
+   */
+  void watchSystem();
+
+  /**
+   * @brief Show the setup wizard on first run
+   */
+  void maybeShowOnboarding();
+  void showOnboarding();
+
+  /**
+   * @brief Check the mode buttons to match the stored mode, both unchecked when none was chosen
+   */
+  void loadModeFromSettings();
 
   bool canRunCore() const;
 
@@ -164,9 +325,10 @@ private:
   void serverClientsChanged(const QStringList &clients);
 
   inline static const auto m_guiSocketName = QStringLiteral("deskflow-gui");
+  static constexpr int kWatchInterval = 5000; ///< ms between network and sleep checks
+  static constexpr int kSleepGap = 30000;     ///< ms a check may be late before we assume the computer slept
   inline static const auto m_nameRegEx = QRegularExpression(QStringLiteral("^[\\w\\-_\\.]{0,255}$"));
 
-  VersionChecker m_versionChecker;
   bool m_secureSocket = false;
   bool m_saveOnExit = true;
   bool m_clientErrorVisible = false;
@@ -184,12 +346,20 @@ private:
 
   LogDock *m_logDock;
   StatusBar *m_statusBar = nullptr;
+  ProfileBar *m_profileBar = nullptr;
+  deskflow::gui::ServerDiscovery *m_discovery = nullptr;
+  bool m_automaticDiscovery = false;
+  ConnectionsPanel *m_connectionsPanel = nullptr;
+  qint64 m_lastWatch = 0;
+  QStringList m_lastNetworks;
+  bool m_watchStarted = false;
 
   // Window Menu
   QMenu *m_menuFile = nullptr;
   QMenu *m_menuEdit = nullptr;
   QMenu *m_menuView = nullptr;
   QMenu *m_menuHelp = nullptr;
+  QMenu *m_menuProfiles = nullptr;
 
   // Window Actions
   QAction *m_actionAbout = nullptr;
@@ -205,6 +375,58 @@ private:
 
   // Network monitoring
   NetworkMonitor *m_networkMonitor = nullptr;
+  QTimer *m_watchTimer = nullptr;
+  QAction *m_actionSetupWizard = nullptr;
+  deskflow::gui::ClipboardHistory *m_clipboardHistory = nullptr;
+  QMenu *m_menuClipboard = nullptr;
+  QMenu *m_menuWake = nullptr;
+  deskflow::gui::FileReceiver *m_fileReceiver = nullptr;
+  QAction *m_actionSendFiles = nullptr;
+  QHash<int, QString> m_offerSenders;
+  QString m_notifiedFolder;
+  std::function<void()> m_notificationAction;
+  ScreenDimmer *m_dimmer = nullptr;
+  deskflow::gui::ScreenLock *m_screenLock = nullptr;
+  QAction *m_actionDimInactive = nullptr;
+  QAction *m_actionLockTogether = nullptr;
+  QAction *m_actionPasteFiles = nullptr;
+  QAction *m_actionGameMode = nullptr;
+  deskflow::gui::Tailscale *m_tailscale = nullptr;
+  QTimer *m_gameTimer = nullptr;
+  bool m_localFullScreen = false;
+  bool m_activeHere = true;
+  QString m_activeComputer;
+  QSet<QString> m_fullScreenClients;
+  bool m_cursorLocked = false;
+  QStringList m_copiedFiles;
+  bool m_settingClipboard = false;
+  /// The last computer that said it copied files, and where to ask for them
+  struct RemoteCopy
+  {
+    QString name;
+    QHostAddress address;
+    int count = 0;
+    QElapsedTimer age;
+  } m_remoteCopy;
+  QHostAddress m_pullFrom;
+  QElapsedTimer m_pullAge;
+  QSet<int> m_pullIds;
+  /// The server passes copied files between two clients through a temporary folder
+  struct Relay
+  {
+    QString name;
+    QHostAddress address;
+  };
+  std::optional<Relay> m_relayTo;
+  QHash<int, Relay> m_relayIds;
+  QHash<int, QString> m_relayFolders;
+  deskflow::gui::Updater *m_updater = nullptr;
+  QAction *m_actionCheckUpdates = nullptr;
+  QAction *m_actionTestBuilds = nullptr;
+  QTimer *m_updateTimer = nullptr;
+  std::unique_ptr<deskflow::gui::UpdateInfo> m_update;
+  QPointer<QProgressDialog> m_updateProgress;
+  bool m_manualUpdateCheck = false;
   QString m_currentIpAddress;
 
   // Server IP strategy optimization

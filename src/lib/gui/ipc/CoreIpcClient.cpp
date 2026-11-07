@@ -22,6 +22,11 @@ void CoreIpcClient::sendStop()
   sendMessage(QStringLiteral("stop"));
 }
 
+void CoreIpcClient::sendLockCursor(bool locked)
+{
+  sendMessage(QStringLiteral("lockCursor=%1").arg(locked ? QStringLiteral("on") : QStringLiteral("off")));
+}
+
 void CoreIpcClient::processCommand(const QString &command, const QStringList &parts)
 {
   const auto args = parts.size() >= 2 ? parts.at(1) : QString();

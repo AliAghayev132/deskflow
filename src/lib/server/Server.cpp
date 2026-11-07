@@ -113,6 +113,10 @@ Server::Server(ServerConfig &config, PrimaryClient *primaryClient, deskflow::Com
   m_events->addHandler(EventTypes::ServerLockCursorToComputer, m_inputFilter, [this](const auto &e) {
     handleLockCursorToComputerEvent(e);
   });
+  // The same request from the app, e.g. game mode, which can't know the input filter
+  m_events->addHandler(EventTypes::ServerLockCursorToComputer, m_events->getSystemTarget(), [this](const auto &e) {
+    handleLockCursorToComputerEvent(e);
+  });
   m_events->addHandler(EventTypes::PrimaryComputerFakeInputBegin, m_inputFilter, [this](const auto &) {
     m_primaryClient->fakeInputBegin();
   });
@@ -154,6 +158,7 @@ Server::~Server()
 {
   // remove event handlers and timers
   using enum EventTypes;
+  m_events->removeHandler(ServerLockCursorToComputer, m_events->getSystemTarget());
   m_events->removeHandler(KeyStateKeyDown, m_inputFilter);
   m_events->removeHandler(KeyStateKeyUp, m_inputFilter);
   m_events->removeHandler(KeyStateKeyRepeat, m_inputFilter);
@@ -1406,7 +1411,11 @@ void Server::handleKeyboardBroadcastEvent(const Event &event)
 
 void Server::handleLockCursorToComputerEvent(const Event &event)
 {
-  const auto *info = static_cast<LockCursorToComputerInfo *>(event.getData());
+  // The hotkey passes plain data, the app's request a data object
+  const auto *info = event.getDataObject() != nullptr ? static_cast<LockCursorToComputerInfo *>(event.getDataObject())
+                                                      : static_cast<LockCursorToComputerInfo *>(event.getData());
+  if (info == nullptr)
+    return;
 
   // choose new state
   bool newState;

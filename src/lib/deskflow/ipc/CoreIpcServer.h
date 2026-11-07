@@ -24,6 +24,12 @@ public:
 
   static CoreIpcServer &instance();
 
+Q_SIGNALS:
+  /**
+   * @brief The app asked to keep the cursor on the current computer, or to let it go again
+   */
+  void lockCursorRequested(bool locked);
+
 private:
   void processCommand(QLocalSocket *clientSocket, const QString &command, const QStringList &parts) override;
 };

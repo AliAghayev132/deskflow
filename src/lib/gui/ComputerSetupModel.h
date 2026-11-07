@@ -25,6 +25,11 @@ class ComputerSetupModel : public QAbstractTableModel
   friend class ServerConfigDialog;
 
 public:
+  enum Roles
+  {
+    IsServerRole = Qt::UserRole + 1 ///< true for the cell holding the server computer
+  };
+
   ComputerSetupModel(ComputerList &computers, int numColumns, int numRows);
 
   static const QString &mimeType()

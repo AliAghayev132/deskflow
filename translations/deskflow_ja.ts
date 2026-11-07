@@ -337,6 +337,71 @@ p, li { white-space: pre-wrap; }
     </message>
 </context>
 <context>
+    <name>ComputerTileDelegate</name>
+    <message>
+        <source>Server</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New computer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drop to remove</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ConnectionsPanel</name>
+    <message>
+        <source>just now</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n min</source>
+        <extracomment>Short form of a number of minutes, e.g. &quot;5 min&quot;</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 h %2 min</source>
+        <extracomment>Hours and minutes, e.g. &quot;1 h 5 min&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connected computers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Waiting for your other computers to connect...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Server</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>connecting...</source>
+        <extracomment>%1 is the server name or address</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>not connected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;1 ms</source>
+        <extracomment>Round trip time below one millisecond</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 ms</source>
+        <extracomment>Round trip time in milliseconds, e.g. &quot;12 ms&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>FingerprintDialog</name>
     <message>
         <source>Local Fingerprints</source>
@@ -349,7 +414,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <source>Compare the fingerprints in this dialog to those on the %1.
 Only connect if they match!</source>
-        <translation>このダイアログの指紋を %1 の指紋と比較してください。
+        <translation type="vanished">このダイアログの指紋を %1 の指紋と比較してください。
 両者が一致する場合にのみ接続してください！</translation>
     </message>
     <message>
@@ -358,7 +423,7 @@ Only connect if they match!</source>
     </message>
     <message>
         <source>client</source>
-        <translation>クライアント</translation>
+        <translation type="vanished">クライアント</translation>
     </message>
     <message>
         <source>
@@ -374,7 +439,7 @@ Trust client and allow connection?
     </message>
     <message>
         <source>server</source>
-        <translation>サーバー</translation>
+        <translation type="vanished">サーバー</translation>
     </message>
     <message>
         <source>
@@ -408,12 +473,26 @@ Do you want to connect to the server?
         <source>Display the fingerprint as a hash</source>
         <translation>指紋をハッシュで表示</translation>
     </message>
+    <message>
+        <source>Check that the client&apos;s pairing code matches the code shown on that computer.
+Only allow the connection if they match!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check that the server&apos;s pairing code matches the code shown on the server.
+Only connect if they match!</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>FingerprintPreview</name>
     <message>
         <source>Invalid hash format</source>
         <translation>不正なハッシュ形式</translation>
+    </message>
+    <message>
+        <source>Pairing code, the same code is shown on the other computer</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -747,6 +826,463 @@ Additionally, check you are able to %1 the server config file: %2</source>
         <source>&lt;p&gt;Keyboard layout support requires matching layouts on all computers. The following layouts from the other computer are not installed on this computer:&lt;/p&gt;&lt;p&gt;&lt;b&gt;%1&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Please install them to enable support for these layouts.&lt;/p&gt;</source>
         <translation>&lt;p&gt;キーボードレイアウトのサポートには対応するレイアウトが全てのコンピューターに必要です。別のコンピューターで使用されている以下のレイアウトがこのコンピューターにインストールされていません:&lt;/p&gt;&lt;p&gt;&lt;b&gt;%1&lt;/b&gt;&lt;/p&gt;&lt;p&gt;サポートを有効にするには、これらのレイアウトをインストールしてください。&lt;/p&gt;</translation>
     </message>
+    <message>
+        <source>How do you want to use this computer?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Arrange your computers and choose the server options.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find servers on this network</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Find</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Profiles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not load the profile &quot;%1&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Profile &quot;%1&quot; is now active</source>
+        <extracomment>%1 is the name of a profile</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Searching...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Found the server &quot;%1&quot; on your network</source>
+        <extracomment>%1 is the name of the server computer</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No servers found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make sure the server is running and can be found on the network</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1  (%2)</source>
+        <extracomment>%1 is a computer name, %2 its address</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Setup Wizard...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wake up %1</source>
+        <extracomment>%1 is the server&apos;s address</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wake-up signal sent to %1, it may take a minute to start</source>
+        <extracomment>%1 is a computer name or address</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not send the wake-up signal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switched to the &quot;%1&quot; profile for this network</source>
+        <extracomment>%1 is the name of a profile</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reconnecting after sleep...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Network changed, reconnecting...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pairing code: %1</source>
+        <extracomment>%1 is a code like &quot;482 913 077 251&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Other computers show this code the first time they connect. Only accept them if the codes match.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Clipboard history</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>History is turned off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing copied yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copied at %1</source>
+        <extracomment>%1 is the time it was copied</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copied at %1
+
+%2</source>
+        <extracomment>%1 is the time it was copied, %2 the start of the copied text</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Remember copied items</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copied items are kept in memory only and are forgotten when %1 quits. Passwords that password managers mark as secret are never remembered.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>C&amp;lear history</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Wake up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No computers to wake yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Computers are added here once they have been connected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (connected)</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Forget these computers</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Receiving files from %1: %2 of %3</source>
+        <extracomment>%1 is a computer name, %2 and %3 are sizes like &quot;3.1 MB&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Send &amp;files...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Send files to a connected computer, or drop them on this window</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Send files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn on TLS encryption in Preferences to send files.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connect to another computer first. Files can be sent to computers that are connected and run this version of %1.</source>
+        <extracomment>%1 is the app name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Send to:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose files to send to %1</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Waiting for %1 to accept the files...</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sending files to %1: %2 of %3</source>
+        <extracomment>%1 is a computer name, %2 and %3 are sizes like &quot;3.1 MB&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n file(s) sent to %1</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Files sent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not send files to %1: %2</source>
+        <extracomment>%1 is a computer name, %2 the reason</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Files not sent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connecting to %1...</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Receive files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%1 wants to send you %n file(s), %2 in total.</source>
+        <extracomment>%1 is a computer name, %2 a size like &quot;3.1 MB&quot;</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The sending computer could not be identified. Only accept if you expected these files.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This is not a computer you have accepted before. Its pairing code is %1, only accept if the sending computer shows the same code.</source>
+        <extracomment>%1 is a pairing code like &quot;482 913 077 251&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save to Downloads</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Decline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n file(s) from %1 saved in %2</source>
+        <extracomment>%1 is a computer name, %2 a folder</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Files received</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Receiving files from %1 failed: %2</source>
+        <extracomment>%1 is a computer name, %2 the reason</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Files not received</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No updates</source>
+        <extracomment>%1 is the app name, %2 its version
+----------
+%1 is the reason</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You have the latest version of %1 (%2).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not check for updates: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <extracomment>%1 is the reason</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The update could not be downloaded: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check for &amp;Updates...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Include &amp;test builds in updates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Also update to builds made from the latest changes, not only to releases</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Checking for updates...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update available</source>
+        <extracomment>%1 is a version number, %2 the app name</extracomment>
+        <translation type="unfinished">ソフトウェア更新あり</translation>
+    </message>
+    <message>
+        <source>Version %1 of %2 is ready to install</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 %2 is available, you have %3.</source>
+        <extracomment>%1 is the app name, %2 the new version, %3 the version in use</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This is a test build made from the latest changes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>It can&apos;t be installed from here, download it from the release page.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 restarts by itself. macOS may ask for Accessibility permission again afterwards.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update now (%1)</source>
+        <extracomment>%1 is a size like &quot;34 MB&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Release page</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloading version %1...</source>
+        <extracomment>%1 is a version number</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starting the installer...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The update was downloaded and verified. Install it from the window that opened, then start %1 again.</source>
+        <extracomment>%1 is the app name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The update could not be installed: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Dim this computer when the cursor is on another</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Lock all computers together</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>When one connected computer is locked, the others lock too</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Files copied on %1</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n file(s) can be pasted here. Click here or use Edit &gt; Paste files copied on %1.</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>&amp;Paste files copied on %1</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Paste files copied on another computer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy files on another connected computer, then paste them here with this</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Asking %1 for the copied files...</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 has no copied files any more</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not get the files from %1: %2</source>
+        <extracomment>%1 is a computer name, %2 the reason</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n file(s) from %1 are ready to paste</source>
+        <extracomment>%1 is a computer name</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>&amp;Game mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>While a game or other full screen app is in front, the cursor stays on that computer. Turn this on on every computer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Game mode: the cursor stays on this computer until the full screen app closes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Game mode ended, the cursor moves freely again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>, via Tailscale</source>
+        <extracomment>Added to a server found through the Tailscale VPN</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>NewComputerWidget</name>
@@ -754,6 +1290,205 @@ Additionally, check you are able to %1 the server config file: %2</source>
         <source>Unnamed</source>
         <extracomment>Used as the hostname. Translation may not contain spaces</extracomment>
         <translation type="unfinished">Unnamed</translation>
+    </message>
+</context>
+<context>
+    <name>OnboardingDialog</name>
+    <message>
+        <source>Set up %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Welcome to %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use one keyboard and mouse across your computers. How will this computer be used?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use this computer&apos;s keyboard and mouse
+(make this computer the server)</source>
+        <translation type="unfinished">このコンピューターのキーボードとマウスを使用する
+(このコンピューターをサーバーにする)</translation>
+    </message>
+    <message>
+        <source>Use another computer’s mouse and keyboard
+(make this computer the client)</source>
+        <translation type="unfinished">別のコンピューターのキーボードとマウスを使用する
+(このコンピューターをクライアントにする)</translation>
+    </message>
+    <message>
+        <source>This computer is the server</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1. Install %1 on your other computers.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>2. On each of them choose &quot;client&quot;. They find this computer on the network by themselves.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>3. When they connect, use Configure Server to drag them where they are on your desk.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start sharing now</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Which computer shares its keyboard?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Make sure %1 is running as the server on that computer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Or type its name or IP address:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>e.g. 192.168.1.10</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Connect now</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Finish</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Looking for servers on your network...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1  (%2)</source>
+        <extracomment>%1 is a computer name, %2 its address</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No servers found yet. Start %1 as the server on the other computer.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Found %n server(s).</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+</context>
+<context>
+    <name>ProfileBar</name>
+    <message>
+        <source>&amp;Profile:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each profile keeps its own mode, server address and computer layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Manage profiles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;New profile...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>D&amp;uplicate current profile...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Rename...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&amp;Delete...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Profile name:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use up to %1 letters, digits, spaces, &apos;-&apos;, &apos;_&apos; or &apos;.&apos;. The name must start and end with a letter or digit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A profile named &quot;%1&quot; already exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not create the profile &quot;%1&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate profile</source>
+        <extracomment>%1 is the name of the profile being copied</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not rename the profile to &quot;%1&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete the profile &quot;%1&quot;? Its server address and computer layout will be lost.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not delete the profile &quot;%1&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use &amp;automatically on this network</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not connected to a network</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to &quot;%1&quot; whenever this computer joins %2</source>
+        <extracomment>%1 is a profile name, %2 a list of networks such as 192.168.1.0/24</extracomment>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -926,6 +1661,18 @@ Additionally, check you are able to %1 the server config file: %2</source>
     <message>
         <source>Super</source>
         <translation type="unfinished">Super</translation>
+    </message>
+    <message>
+        <source>%1 needs Accessibility access to share your keyboard and mouse.</source>
+        <extracomment>%1 is the app name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn on %1 in System Settings &gt; Privacy &amp; Security &gt; Accessibility, then click Retry.
+
+If %1 is already on, select it, remove it with the minus button and add it again. This is needed after installing a new version.</source>
+        <extracomment>%1 is the app name</extracomment>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1101,6 +1848,14 @@ Enabling this setting will disable the server config GUI.</source>
     <message>
         <source>Enable lock to computer at startup</source>
         <translation>起動時にコンピューター間移動のロックを有効にする</translation>
+    </message>
+    <message>
+        <source>Clients can find this computer with the Find button instead of typing its address. Only the computer name and port are shared.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Let computers on this network &amp;find this server</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1395,6 +2150,160 @@ Enabling this setting will disable the server config GUI.</source>
     <message>
         <source>Encryption Disabled</source>
         <translation>暗号化無効</translation>
+    </message>
+</context>
+<context>
+    <name>deskflow::gui::ClipboardHistory</name>
+    <message>
+        <source>Image %1 × %2</source>
+        <extracomment>%1 and %2 are the width and height in pixels</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>deskflow::gui::FileReceiver</name>
+    <message>
+        <source>Receiving files was stopped</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The files were not accepted in time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The other computer stopped responding</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The other computer closed the connection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The other computer sent data before it was accepted</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not create the folder %1</source>
+        <extracomment>%1 is a folder</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>There is not enough free space for these files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not save %1</source>
+        <extracomment>%1 is a file name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>deskflow::gui::FileSender</name>
+    <message>
+        <source>The other computer stopped responding</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nobody answered on the other computer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not reach the other computer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No files were chosen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Up to %1 files can be sent at once</source>
+        <extracomment>%1 is the most files that can be sent at once</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 can&apos;t be read</source>
+        <extracomment>%1 is a file name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sending was cancelled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The other computer could not be verified, connect to it with %1 first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The other computer sent an answer that could not be read</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The other computer declined the files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The transfer ended early</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 changed while it was being sent</source>
+        <extracomment>%1 is a file name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 has no files to send</source>
+        <extracomment>%1 is a folder name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>deskflow::gui::PeerMessage</name>
+    <message>
+        <source>The other computer didn&apos;t answer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The other computer could not be verified</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The other computer sent an answer that could not be read</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>deskflow::gui::Updater</name>
+    <message>
+        <source>The list of releases could not be read</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not save the update: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The update could not be verified, it has no checksum</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not read the downloaded update</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The downloaded update is damaged, its checksum doesn&apos;t match</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The installer could not be started</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The disk image could not be opened</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This update can&apos;t be installed automatically</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

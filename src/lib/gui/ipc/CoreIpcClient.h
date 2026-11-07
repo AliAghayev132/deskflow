@@ -21,6 +21,11 @@ public:
 
   void sendStop();
 
+  /**
+   * @brief Keep the cursor on the computer it is on (server only), or let it move again
+   */
+  void sendLockCursor(bool locked);
+
 Q_SIGNALS:
   void commandReceived(const QString &command, const QString &args);
 

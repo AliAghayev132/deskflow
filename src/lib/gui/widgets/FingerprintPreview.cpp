@@ -13,6 +13,7 @@
 #include <QLabel>
 
 #include <gui/StyleUtils.h>
+#include <gui/core/PairingCode.h>
 #include <net/SecureUtils.h>
 
 FingerprintPreview::FingerprintPreview(
@@ -42,7 +43,7 @@ FingerprintPreview::FingerprintPreview(
   int artPadding = 48;
   if (deskflow::platform::isMac())
     artPadding = 32;
-  setFixedSize(m_lblArt->width() + artPadding, height());
+  setFixedSize(qMax(m_lblArt->width(), m_lblCode->sizeHint().width()) + artPadding, height());
 }
 
 void FingerprintPreview::toggleMode(bool hashMode)
@@ -84,9 +85,20 @@ QLayout *FingerprintPreview::sha256Layout(const Fingerprint &fingerprint, const 
   m_lblArt->setVisible(!hashMode);
   m_lblArt->setFont(fixedFont());
 
+  m_lblCode = new QLabel(deskflow::gui::pairingCode(fingerprint.data), this);
+  m_lblCode->setObjectName(QStringLiteral("lblPairingCode"));
+  m_lblCode->setAlignment(Qt::AlignVCenter | Qt::AlignHCenter);
+  m_lblCode->setTextInteractionFlags(Qt::TextSelectableByMouse);
+  m_lblCode->setToolTip(tr("Pairing code, the same code is shown on the other computer"));
+  auto codeFont = fixedFont();
+  codeFont.setBold(true);
+  codeFont.setPointSizeF(codeFont.pointSizeF() * 1.25);
+  m_lblCode->setFont(codeFont);
+
   auto sha256Layout = new QVBoxLayout();
   sha256Layout->setContentsMargins(0, 0, 0, 0);
   sha256Layout->addWidget(labelTitle);
+  sha256Layout->addWidget(m_lblCode);
   sha256Layout->addWidget(m_lblHash);
   sha256Layout->addWidget(m_lblArt);
 

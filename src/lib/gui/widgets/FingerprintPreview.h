@@ -26,4 +26,5 @@ private:
   QLayout *sha256Layout(const Fingerprint &fingerprint = {}, const QString &titleText = {}, bool hashMode = false);
   QLabel *m_lblHash = nullptr;
   QLabel *m_lblArt = nullptr;
+  QLabel *m_lblCode = nullptr;
 };

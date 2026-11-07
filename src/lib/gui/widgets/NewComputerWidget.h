@@ -21,4 +21,8 @@ public:
 
 protected:
   void mousePressEvent(QMouseEvent *) override;
+  void changeEvent(QEvent *event) override;
+
+private:
+  void updateTile();
 };

@@ -3,10 +3,18 @@
 
 add_subdirectory(config)
 add_subdirectory(core)
+add_subdirectory(widgets)
 
 create_test(
   NAME LoggerTests
   DEPENDS gui
   SOURCE LoggerTests.cpp
+  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/gui"
+)
+
+create_test(
+  NAME MainWindowTests
+  DEPENDS gui
+  SOURCE MainWindowTests.cpp
   WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/src/lib/gui"
 )

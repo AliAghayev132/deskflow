@@ -26,6 +26,8 @@ add_library(common STATIC
   LogLevel.h
   NetworkProtocol.h
   PlatformInfo.h
+  Profiles.h
+  Profiles.cpp
   Settings.h
   Settings.cpp
   QSettingsProxy.cpp

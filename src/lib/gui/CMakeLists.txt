@@ -29,6 +29,8 @@ add_library(${target} STATIC
   Messages.cpp
   Messages.h
   StyleUtils.h
+  Theme.cpp
+  Theme.h
   TlsUtility.cpp
   TlsUtility.h
   VersionChecker.cpp
@@ -40,9 +42,27 @@ add_library(${target} STATIC
   config/ComputerList.h
   config/ServerConfig.cpp
   config/ServerConfig.h
+  core/ClipboardHistory.cpp
+  core/ClipboardHistory.h
   core/CoreProcess.cpp
   core/CoreProcess.h
+  core/FileTransfer.cpp
+  core/FileTransfer.h
+  core/FullScreenDetector.cpp
+  core/FullScreenDetector.h
   core/NetworkMonitor.cpp
+  core/PairingCode.cpp
+  core/PairingCode.h
+  core/ScreenLock.cpp
+  core/ScreenLock.h
+  core/ServerDiscovery.cpp
+  core/Tailscale.cpp
+  core/Tailscale.h
+  core/ServerDiscovery.h
+  core/Updater.cpp
+  core/Updater.h
+  core/WakeOnLan.cpp
+  core/WakeOnLan.h
   core/NetworkMonitor.h
   dialogs/AboutDialog.cpp
   dialogs/AboutDialog.h
@@ -61,6 +81,8 @@ add_library(${target} STATIC
   dialogs/HelpDialog.cpp
   dialogs/HelpDialog.h
   dialogs/HotkeyDialog.cpp
+  dialogs/OnboardingDialog.cpp
+  dialogs/OnboardingDialog.h
   dialogs/HotkeyDialog.h
   dialogs/HotkeyDialog.ui
   dialogs/ServerConfigDialog.cpp
@@ -96,6 +118,10 @@ add_library(${target} STATIC
   validators/IpAddressValidator.cpp
   validators/IpAddressValidator.h
   widgets/ComputerSetupView.cpp
+  widgets/ConnectionsPanel.cpp
+  widgets/ConnectionsPanel.h
+  widgets/ComputerTileDelegate.cpp
+  widgets/ComputerTileDelegate.h
   widgets/ComputerSetupView.h
   widgets/FingerprintPreview.cpp
   widgets/FingerprintPreview.h
@@ -105,17 +131,29 @@ add_library(${target} STATIC
   widgets/LogDock.h
   widgets/LogWidget.h
   widgets/LogWidget.cpp
+  widgets/ProfileBar.cpp
+  widgets/ProfileBar.h
   widgets/NewComputerWidget.cpp
   widgets/NewComputerWidget.h
   widgets/RemoveComputerWidget.cpp
   widgets/RemoveComputerWidget.h
   widgets/SearchWidget.h
+  widgets/ScreenDimmer.cpp
+  widgets/ScreenDimmer.h
   widgets/SearchWidget.cpp
   widgets/StatusBar.cpp
   widgets/StatusBar.h
   widgets/SettingsDialogButtonBox.cpp
   widgets/SettingsDialogButtonBox.h
 )
+
+if(WIN32)
+  # Screen lock notifications
+  target_link_libraries(${target} PRIVATE wtsapi32)
+endif()
+
+# The updater picks the installer built for the same architecture
+target_compile_definitions(${target} PRIVATE DESKFLOW_BUILD_ARCHITECTURE="${BUILD_ARCHITECTURE}")
 
 target_link_libraries(${target}
   PUBLIC

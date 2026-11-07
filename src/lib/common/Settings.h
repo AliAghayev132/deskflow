@@ -11,6 +11,8 @@
 
 #include <QDir>
 
+#include <functional>
+
 #include "common/Constants.h"
 #include "common/NetworkProtocol.h"
 #include "common/QSettingsProxy.h"
@@ -44,6 +46,8 @@ public:
     inline static const auto LanguageSync = QStringLiteral("client/languageSync");
     inline static const auto RemoteHost = QStringLiteral("client/remoteHost");
     inline static const auto RecentRemoteHosts = QStringLiteral("client/recentRemoteHosts");
+    inline static const auto WakeHost = QStringLiteral("client/wakeHost");
+    inline static const auto WakeMac = QStringLiteral("client/wakeMac");
     inline static const auto XdpClipboardRetried = QStringLiteral("client/xdpClipboardRetried");
     inline static const auto XdpRestoreToken = QStringLiteral("client/xdpRestoreToken");
   };
@@ -77,6 +81,7 @@ public:
     inline static const auto AutoStartCore = QStringLiteral("gui/startCoreWithGui");
     inline static const auto AutoUpdateCheck = QStringLiteral("gui/enableUpdateCheck");
     inline static const auto UpdateCheckUrl = QStringLiteral("gui/updateCheckUrl");
+    inline static const auto UpdateTestBuilds = QStringLiteral("gui/updateTestBuilds");
     inline static const auto CloseReminder = QStringLiteral("gui/closeReminder");
     inline static const auto CloseToTray = QStringLiteral("gui/closeToTray");
     inline static const auto LogExpanded = QStringLiteral("gui/logExpanded");
@@ -86,6 +91,12 @@ public:
     inline static const auto ShownServerFirstStartMessage = QStringLiteral("gui/shownServerFirstStartMessage");
     inline static const auto ShowVersionInTitle = QStringLiteral("gui/showVersionInTitle");
     inline static const auto IgnoreMissingKeyboardLayouts = QStringLiteral("gui/ignoreMissingKeyboardLayouts");
+    inline static const auto ActiveProfile = QStringLiteral("gui/activeProfile");
+    inline static const auto OnboardingDone = QStringLiteral("gui/onboardingDone");
+    inline static const auto ClipboardHistory = QStringLiteral("gui/clipboardHistory");
+    inline static const auto DimInactive = QStringLiteral("gui/dimInactive");
+    inline static const auto LockTogether = QStringLiteral("gui/lockTogether");
+    inline static const auto GameMode = QStringLiteral("gui/gameMode");
   };
   struct Log
   {
@@ -104,6 +115,9 @@ public:
   struct Server
   {
     inline static const auto ClipboardSize = QStringLiteral("server/clipboardSize");
+    inline static const auto Discoverable = QStringLiteral("server/discoverable");
+    // "MAC=name" for each client seen, so the server can wake them up
+    inline static const auto KnownClients = QStringLiteral("server/knownClients");
     inline static const auto DefaultLockToComputerState = QStringLiteral("server/defaultLockToComputerState");
     inline static const auto DisableLockToComputer = QStringLiteral("server/disableLockToComputer");
     inline static const auto EnableClipboard = QStringLiteral("server/enableClipboard");
@@ -217,6 +231,21 @@ public:
   static QVariant computerDefaults(const QString &key);
   static QStringList knownComputers();
 
+  /**
+   * @brief Values of all keys stored in the settings file that match a filter
+   * @param filter returns true for keys that should be included
+   */
+  static QMap<QString, QVariant> values(const std::function<bool(const QString &)> &filter);
+
+  /**
+   * @brief Replace all keys that match a filter with a new set of values in one write.
+   * Matching keys missing from values are removed, so they fall back to their defaults.
+   * Used when switching profiles, emits no settingsChanged signals.
+   * @param filter returns true for keys that are replaced
+   * @param values the new values, keys that don't match the filter are ignored
+   */
+  static void replaceValues(const std::function<bool(const QString &)> &filter, const QMap<QString, QVariant> &values);
+
 Q_SIGNALS:
   void settingsChanged(const QString key);
   void settingsWritableChanged(bool writable);
@@ -280,6 +309,8 @@ private:
     , Client::LanguageSync
     , Client::RemoteHost
     , Client::RecentRemoteHosts
+    , Client::WakeHost
+    , Client::WakeMac
     , Client::YScrollScale
     , Client::XScrollScale
     , Core::CoreMode
@@ -308,6 +339,7 @@ private:
     , Gui::AutoStartCore
     , Gui::AutoUpdateCheck
     , Gui::UpdateCheckUrl
+    , Gui::UpdateTestBuilds
     , Gui::CloseReminder
     , Gui::CloseToTray
     , Gui::LogExpanded
@@ -316,6 +348,12 @@ private:
     , Gui::ShownServerFirstStartMessage
     , Gui::ShowVersionInTitle
     , Gui::IgnoreMissingKeyboardLayouts
+    , Gui::ActiveProfile
+    , Gui::OnboardingDone
+    , Gui::ClipboardHistory
+    , Gui::DimInactive
+    , Gui::LockTogether
+    , Gui::GameMode
     , Security::Certificate
     , Security::CheckPeers
     , Security::KeySize
@@ -323,6 +361,8 @@ private:
     , Server::ClipboardSize
     , Server::DefaultLockToComputerState
     , Server::DisableLockToComputer
+    , Server::Discoverable
+    , Server::KnownClients
     , Server::EnableClipboard
     , Server::EnableHeartbeat
     , Server::EnableSwitchDelay
@@ -347,6 +387,7 @@ private:
     , Gui::ShownServerFirstStartMessage
     , Gui::ShowVersionInTitle
     , Gui::IgnoreMissingKeyboardLayouts
+    , Gui::OnboardingDone
     , Core::PreventSleep
     , Core::EnableEnterCommand
     , Core::EnableExitCommand
@@ -374,9 +415,14 @@ private:
     , Gui::CloseReminder
     , Gui::LogExpanded
     , Gui::SymbolicTrayIcon
+    , Gui::ClipboardHistory
+    , Gui::UpdateTestBuilds
+    , Gui::DimInactive
+    , Gui::LockTogether
     , Security::TlsEnabled
     , Security::CheckPeers
     , Server::EnableClipboard
+    , Server::Discoverable
     , Server::Win32KeepForeground
   };
 

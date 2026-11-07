@@ -20,6 +20,11 @@
     <RemoveFile Id="RmOldLog" On="install" Name="deskflow-daemon.log"/>
   </CPackWiXFragment>
 
+  <!-- The app itself answers server discovery (UDP 24802) and receives files (TCP 24803), also over VPNs like Tailscale -->
+  <CPackWiXFragment Id="CM_CP_deskflow.exe">
+    <firewall:FirewallException Id="GuiFirewallException" Name="Deskflow" Program="[INSTALL_ROOT]deskflow.exe" Scope="any"/>
+  </CPackWiXFragment>
+
   <CPackWiXFragment Id="CM_CP_deskflow_core.exe">
     <firewall:FirewallException Id="ServerFirewallException" Name="Deskflow Server" Program="[INSTALL_ROOT]deskflow-core.exe" Scope="any"/>
     <firewall:FirewallException Id="ClientFirewallException" Name="Deskflow Client" Program="[INSTALL_ROOT]deskflow-core.exe" Scope="any"/>

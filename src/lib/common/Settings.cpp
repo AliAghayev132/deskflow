@@ -558,3 +558,30 @@ QStringList Settings::knownComputers()
   }
   return computers;
 }
+
+QMap<QString, QVariant> Settings::values(const std::function<bool(const QString &)> &filter)
+{
+  QMap<QString, QVariant> result;
+  const auto settings = instance()->m_settings;
+  const auto keys = settings->allKeys();
+  for (const auto &key : keys) {
+    if (filter(key))
+      result.insert(key, settings->value(key));
+  }
+  return result;
+}
+
+void Settings::replaceValues(const std::function<bool(const QString &)> &filter, const QMap<QString, QVariant> &values)
+{
+  auto settings = instance()->m_settings;
+  const auto keys = settings->allKeys();
+  for (const auto &key : keys) {
+    if (filter(key) && !values.contains(key))
+      settings->remove(key);
+  }
+  for (const auto [key, value] : values.asKeyValueRange()) {
+    if (filter(key))
+      settings->setValue(key, value);
+  }
+  settings->sync();
+}

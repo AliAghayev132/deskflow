@@ -9,6 +9,7 @@
 #include "ComputerSetupView.h"
 
 #include "ComputerSetupModel.h"
+#include "ComputerTileDelegate.h"
 #include "dialogs/ComputerSettingsDialog.h"
 
 #include <QDrag>
@@ -19,8 +20,14 @@
 #include <QMouseEvent>
 #include <QResizeEvent>
 
-ComputerSetupView::ComputerSetupView(QWidget *parent) : QTableView(parent)
+ComputerSetupView::ComputerSetupView(QWidget *parent) : QTableView(parent), m_delegate{new ComputerTileDelegate(this)}
 {
+  setObjectName(QStringLiteral("computerSetupView"));
+  setItemDelegate(m_delegate);
+  setShowGrid(false);
+  setMouseTracking(true);
+  setFrameShape(QFrame::NoFrame);
+
   setDropIndicatorShown(true);
   setDragDropMode(DragDrop);
   setSelectionMode(SingleSelection);
@@ -89,6 +96,26 @@ void ComputerSetupView::dragEnterEvent(QDragEnterEvent *event)
     event->ignore();
 }
 
+void ComputerSetupView::setDropTarget(const QModelIndex &index)
+{
+  if (m_delegate->dropTarget() == index)
+    return;
+  m_delegate->setDropTarget(index);
+  viewport()->update();
+}
+
+void ComputerSetupView::dragLeaveEvent(QDragLeaveEvent *event)
+{
+  setDropTarget({});
+  QTableView::dragLeaveEvent(event);
+}
+
+void ComputerSetupView::dropEvent(QDropEvent *event)
+{
+  setDropTarget({});
+  QTableView::dropEvent(event);
+}
+
 void ComputerSetupView::dragMoveEvent(QDragMoveEvent *event)
 {
   if (event->mimeData()->hasFormat(ComputerSetupModel::mimeType())) {
@@ -111,6 +138,9 @@ void ComputerSetupView::dragMoveEvent(QDragMoveEvent *event)
     }
   } else
     event->ignore();
+
+  // Highlight the cell the computer would land in
+  setDropTarget(event->isAccepted() ? indexAt(event->position().toPoint()) : QModelIndex());
 }
 
 // this is reimplemented from QAbstractItemView::startDrag()
@@ -125,11 +155,12 @@ void ComputerSetupView::startDrag(Qt::DropActions)
   if (pData == nullptr)
     return;
 
-  const QPixmap &pixmap = model()->computer(indexes[0]).pixmap();
+  const auto &computer = model()->computer(indexes[0]);
+  const QSize tileSize(std::min(columnWidth(indexes[0].column()), 160), std::min(rowHeight(indexes[0].row()), 120));
   auto *pDrag = new QDrag(this);
-  pDrag->setPixmap(pixmap);
+  pDrag->setPixmap(ComputerTileDelegate::tilePixmap(computer.name(), computer.isServer(), tileSize, palette()));
   pDrag->setMimeData(pData);
-  pDrag->setHotSpot(QPoint(iconSize().width() / 2, iconSize().height() / 2));
+  pDrag->setHotSpot(QPoint(tileSize.width() / 2, tileSize.height() / 2));
 
   if (pDrag->exec(Qt::MoveAction, Qt::MoveAction) == Qt::MoveAction) {
     selectionModel()->clear();
@@ -154,7 +185,8 @@ void ComputerSetupView::initViewItemOption(QStyleOptionViewItem *option) const
   delete w;
 
   option->decorationSize = QSize(96, 96);
-  option->showDecorationSelected = true;
+  // The tile delegate draws the selection itself
+  option->showDecorationSelected = false;
   option->decorationPosition = QStyleOptionViewItem::Top;
   option->decorationAlignment = Qt::AlignHCenter | Qt::AlignVCenter;
   option->displayAlignment = Qt::AlignTop | Qt::AlignHCenter;
